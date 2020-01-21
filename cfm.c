@@ -29,6 +29,16 @@
 
 #define LIST_ALLOC_SIZE 64
 
+#if defined(USE_ITALICS) && USE_ITALICS
+#define EMPHASIS "\033[3m"
+#else
+#define EMPHASIS "\033[1m"
+#endif /* USE_ITALICS */
+
+#if !defined(POINTER) || !POINTER
+#define POINTER "->"
+#endif /* POINTER */
+
 enum elemtype {
     ELEM_DIR,
     ELEM_LINK,
@@ -45,6 +55,7 @@ struct listelem {
 
 static struct termios old_term;
 static uint8_t redraw = 0;
+static int pointerwidth = 2;
 
 /*
  * Get editor.
@@ -270,11 +281,65 @@ static int getkey() {
 }
 
 /*
+ * Draws one element to the screen.
+ */
+static void drawentry(struct listelem* e) {
+    if (e->selected) {
+        printf("%s ", POINTER);
+    } else {
+        for (int i = 0; i < pointerwidth; i++) {
+            printf(" ");
+        }
+    }
+
+    switch (e->type) {
+        case ELEM_EXEC:
+            printf("\033[33m");
+            break;
+        case ELEM_DIR:
+            printf("\033[32m");
+            break;
+        case ELEM_LINK:
+        case ELEM_DIRLINK:
+            printf("\033[36m");
+            break;
+        case ELEM_FILE:
+        default:
+            printf("\033[m");
+            break;
+    }
+
+    printf("%s\033[m", e->name);
+
+    printf("\033[G"); // cursor to column 1
+}
+
+/*
  * Draws the whole screen (redraw).
  * Use sparingly.
  */
-static int drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o) {
-    return 0;
+static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o, int r, int c) {
+    char fmt[256];
+    // use a format str to align the path and such
+    snprintf(fmt, 256,
+        "\033[2J" // clear
+        "\033[%d;H" // go to the bottom row
+        EMPHASIS "\033[7m%%-%ds" // path + count
+        "\033[m",
+        r, c);
+    char status[256];
+    snprintf(status, 256, "%zu in %s", n, wd);
+
+    printf(fmt, status);
+
+    printf("\033[H"); // move to top left
+
+    for (size_t i = o; i < n && i - o < r - 2; i++) {
+        drawentry(&(l[i]));
+        printf("\n\r");
+    }
+
+    fflush(stdout);
 }
 
 /*
@@ -311,6 +376,8 @@ int main(int argc, char** argv) {
             exit(EXIT_FAILURE);
         }
     }
+
+    pointerwidth = strlen(POINTER) + 1;
 
     const char* editor = geteditor();
     const char* shell = getshell();
@@ -362,12 +429,45 @@ int main(int argc, char** argv) {
            pos = 0,
            dcount = 0;
 
+    int k;
     while (1) {
         if (update) {
             update = 0;
+            dcount = listdir(wd, &list, &listsize, 0);
+            selection = 0;
+            list[selection].selected = 1;
+            redraw = 1;
         }
         if (redraw) {
             redraw = 0;
+            drawscreen(wd, list, dcount, selection, pos, rows, cols);
+            printf("\033[%zu;1H", selection+1);
+        }
+
+        k = getkey();
+        switch (k) {
+            case 'j':
+                if (selection < dcount - 1) {
+                    list[selection].selected = 0;
+                    drawentry(&(list[selection]));
+                    selection++;
+                    list[selection].selected = 1;
+                    printf("\033[E");
+                    drawentry(&(list[selection]));
+                    fflush(stdout);
+                }
+                break;
+            case 'k':
+                if (selection > 0) {
+                    list[selection].selected = 0;
+                    drawentry(&(list[selection]));
+                    selection--;
+                    list[selection].selected = 1;
+                    printf("\033[F");
+                    drawentry(&(list[selection]));
+                    fflush(stdout);
+                }
+                break;
         }
     }
 

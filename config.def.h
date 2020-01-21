@@ -14,7 +14,7 @@
  *
  * Value: string
  */
-//#define EDITOR "/usr/local/nvim"
+//#define EDITOR "/usr/local/bin/nvim"
 
 /* SHELL:
  * If not set, cfm will attempt to use the $SHELL
@@ -25,13 +25,20 @@
  */
 //#define SHELL "/bin/bash"
 
-/* TRASH:
- * If not set, cfm will permanently remove deleted files.
- * Else, cfm will move them to the specified directory.
- * Directory must exist.
- * 
+/* USE_ITALICS:
+ * If not set (or 0), bold will be used in place of italics.
+ * Otherwise, italics will be used.
+ *
+ * Value: boolean (0 or 1)
+ */
+//#define USE_ITALICS 1
+
+/* POINTER:
+ * If not set, cfm will use "->" in front of the selected
+ * item. You can set a different string here, such as ">".
+ *
  * Value: string
  */
-//#define TRASH "/home/cactus/.cfmtrash"
+//#define POINTER "->"
 
 #endif
