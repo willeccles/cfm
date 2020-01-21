@@ -1,4 +1,5 @@
 #include <dirent.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdint.h>
@@ -6,11 +7,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
 
-// include user configs
+// include user config
 #include "config.h"
 
 #ifdef __GNUC__
@@ -19,16 +21,13 @@
 #define UNUSED(x) UNUSED_##x
 #endif
 
-#ifndef SIGWINCH
-#define SIGWINCH 28
-#endif
-
 #define K_ESC '\033'
 #define ESC_UP 'A'
 #define ESC_DOWN 'B'
 #define ESC_LEFT 'D'
 #define ESC_RIGHT 'C'
-#define ESC_BKSP 127
+
+#define LIST_ALLOC_SIZE 64
 
 enum elemtype {
     ELEM_DIR,
@@ -40,11 +39,12 @@ enum elemtype {
 
 struct listelem {
     enum elemtype type;
-    char name[NAME_MAX + 1];
+    char name[NAME_MAX];
     uint8_t selected;
 };
 
 static struct termios old_term;
+static uint8_t redraw = 0;
 
 /*
  * Get editor.
@@ -148,6 +148,98 @@ static void resetterm() {
 }
 
 /*
+ * Creates a child process.
+ */
+static void execcmd(const char* path, const char* cmd, const char* arg, int r) {
+    pid_t pid = fork();
+    if (pid < 0) {
+        return;
+    }
+
+    if (pid == 0) {
+        if (chdir(path) < 0) {
+            _exit(EXIT_FAILURE);
+        }
+        execlp(cmd, cmd, arg, NULL);
+        _exit(EXIT_FAILURE);
+    } else {
+        int s;
+        do {
+            waitpid(pid, &s, WUNTRACED);
+        } while (!WIFEXITED(s) && !WIFSIGNALED(s));
+    }
+
+    setupterm(r);
+}
+
+/*
+ * Reads a directory into the list, returning the number of items in the dir.
+ */
+static size_t listdir(const char* path, struct listelem** list, size_t* listsize, uint8_t hidden) {
+    DIR* d;
+    struct dirent* dir;
+    d = opendir(path);
+    size_t count = 0;
+    struct stat st;
+    int dfd = dirfd(d);
+    if (d) {
+        while ((dir = readdir(d)) != NULL) {
+            if (dir->d_name[0] == '.' && (dir->d_name[1] == '\0' || (dir->d_name[1] == '.' && dir->d_name[2] == '\0'))) {
+                continue;
+            }
+
+            if (!hidden && dir->d_name[0] == '.') {
+                continue;
+            }
+
+            if (count == *listsize) {
+                *listsize += LIST_ALLOC_SIZE;
+                *list = realloc(*list, *listsize * sizeof(**list));
+                if (*list == NULL) {
+                    perror("realloc");
+                    exit(EXIT_FAILURE);
+                }
+            }
+
+            strncpy((*list)[count].name, dir->d_name, NAME_MAX);
+
+            (*list)[count].selected = 0;
+
+            if (0 != fstatat(dfd, dir->d_name, &st, AT_SYMLINK_NOFOLLOW)) {
+                continue;
+            }
+
+            if (S_ISDIR(st.st_mode)) {
+                (*list)[count].type = ELEM_DIR;
+            } else if (S_ISLNK(st.st_mode)) {
+                if (0 != fstatat(dfd, dir->d_name, &st, 0)) {
+                    if (S_ISDIR(st.st_mode)) {
+                        (*list)[count].type = ELEM_DIRLINK;
+                    } else {
+                        (*list)[count].type = ELEM_LINK;
+                    }
+                } else {
+                    (*list)[count].type = ELEM_LINK;
+                }
+            } else {
+                if (st.st_mode & S_IXUSR) {
+                    (*list)[count].type = ELEM_EXEC;
+                } else {
+                    (*list)[count].type = ELEM_FILE;
+                }
+            }
+
+            count++;
+        }
+
+        closedir(d);
+        // TODO sort the list
+    }
+
+    return count;
+}
+
+/*
  * Get a key. Wraps getchar() and returns hjkl instead of arrow keys.
  * Also, returns 
  */
@@ -172,8 +264,6 @@ static int getkey() {
             return 'l';
         case ESC_LEFT:
             return 'h';
-        case ESC_BKSP:
-            return c[2];
         default:
             return -1;
     }
@@ -183,8 +273,8 @@ static int getkey() {
  * Draws the whole screen (redraw).
  * Use sparingly.
  */
-static int drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o, ) {
-
+static int drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o) {
+    return 0;
 }
 
 /*
@@ -259,6 +349,13 @@ int main(int argc, char** argv) {
     }
 
     atexit(resetterm);
+
+    size_t listsize = LIST_ALLOC_SIZE;
+    struct listelem* list = malloc(LIST_ALLOC_SIZE * sizeof(struct listelem));
+    if (!list) {
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
 
     uint8_t update = 1;
     size_t selection = 0,
