@@ -463,7 +463,7 @@ int main(int argc, char** argv) {
                     drawentry(&(list[selection]));
                     selection--;
                     list[selection].selected = 1;
-                    printf("\033[F");
+                    printf("\033[L");
                     drawentry(&(list[selection]));
                     fflush(stdout);
                 }
