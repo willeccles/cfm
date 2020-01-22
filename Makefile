@@ -2,7 +2,7 @@ TARGET = cfm
 MANPAGE = cfm.1
 PREFIX ?= /usr/local
 
-CFLAGS = -O3
+CFLAGS = -O3 -std=c11
 
 .PHONY: all install clean
 

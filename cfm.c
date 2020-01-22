@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
+#include <stdatomic.h>
 
 // include user config
 #include "config.h"
@@ -69,7 +70,7 @@ struct listelem {
 #define E_DIR(t) ((t)==ELEM_DIR || (t)==ELEM_DIRLINK)
 
 static struct termios old_term;
-static uint8_t redraw = 0;
+static atomic_bool redraw = 0;
 static int pointerwidth = 2;
 
 /*
