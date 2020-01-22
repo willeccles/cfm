@@ -373,6 +373,26 @@ static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t 
 }
 
 /*
+ * Writes back the parent directory of a path.
+ * Returns 1 if the path was changed, 0 if not (i.e. if
+ * the path was "/").
+ */
+static int parentdir(char* path) {
+    char* last = strrchr(path, '/');
+    if (last == path && path[1] == '\0') {
+        return 0;
+    }
+
+    if (last == path) {
+        path[1] = '\0';
+    } else {
+        *last = '\0';
+    }
+
+    return 1;
+}
+
+/*
  * Signal handler for SIGINT/SIGTERM.
  */
 static void sigdie(int UNUSED(sig)) {
@@ -460,7 +480,6 @@ int main(int argc, char** argv) {
            pos = 0,
            dcount = 0;
 
-    int k;
     while (1) {
         if (update) {
             update = 0;
@@ -482,7 +501,7 @@ int main(int argc, char** argv) {
             fflush(stdout);
         }
 
-        k = getkey();
+        int k = getkey();
         switch (k) {
             case 'j':
                 if (selection < dcount - 1) {
@@ -518,10 +537,22 @@ int main(int argc, char** argv) {
             case 'l':
                 if (list[selection].type == ELEM_DIR
                     || list[selection].type == ELEM_DIRLINK) {
-                    strncat(wd, list[selection].name, PATH_MAX - strlen(wd) - 1);
+                    if (wd[1] != '\0') {
+                        strcat(wd, "/");
+                    }
+                    strncat(wd, list[selection].name, PATH_MAX - strlen(wd) - 2);
+                    selection = 0;
+                    pos = 0;
                     update = 1;
                 } else {
                     execcmd(wd, editor, list[selection].name, rows);
+                    update = 1;
+                }
+                break;
+            case 'h':
+                if (parentdir(wd)) {
+                    pos = 0;
+                    selection = 0;
                     update = 1;
                 }
                 break;
