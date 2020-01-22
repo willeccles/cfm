@@ -16,9 +16,9 @@
 #include "config.h"
 
 #ifdef __GNUC__
-#define UNUSED(x) UNUSED_##x __attribute__((unused))
+# define UNUSED(x) UNUSED_##x __attribute__((unused))
 #else
-#define UNUSED(x) UNUSED_##x
+# define UNUSED(x) UNUSED_##x
 #endif
 
 #define K_ESC '\033'
@@ -29,15 +29,20 @@
 
 #define LIST_ALLOC_SIZE 64
 
-#if defined(USE_ITALICS) && USE_ITALICS
-#define EMPHASIS "\033[3m"
-#else
-#define EMPHASIS "\033[1m"
-#endif /* USE_ITALICS */
-
-#if !defined(POINTER) || !POINTER
-#define POINTER "->"
+#ifndef POINTER
+# define POINTER "->"
 #endif /* POINTER */
+
+#ifdef OPENER
+# if defined ENTER_OPENS && ENTER_OPENS
+#  define ENTER_OPEN
+# else
+#  undef ENTER_OPEN
+# endif
+#else
+# undef ENTER_OPENS
+# undef ENTER_OPEN
+#endif
 
 enum elemtype {
     ELEM_DIR,
@@ -47,11 +52,21 @@ enum elemtype {
     ELEM_FILE,
 };
 
+static const char* elemtypestrings[] = {
+    "dir",
+    "@file",
+    "@dir",
+    "exec",
+    "file",
+};
+
 struct listelem {
     enum elemtype type;
     char name[NAME_MAX];
     uint8_t selected;
 };
+
+#define E_DIR(t) ((t)==ELEM_DIR || (t)==ELEM_DIRLINK)
 
 static struct termios old_term;
 static uint8_t redraw = 0;
@@ -106,6 +121,17 @@ static const char* getshell() {
 }
 
 /*
+ * Get the opener program.
+ */
+static const char* getopener() {
+#ifdef OPENER
+    return OPENER;
+#else
+    return NULL;
+#endif
+}
+
+/*
  * Save the default terminal settings.
  * Returns 0 on success.
  */
@@ -153,9 +179,9 @@ static int setupterm(int r) {
     printf(
         "\033[?1049h" // use alternative screen buffer
         "\033[?7l"    // disable line wrapping
-        //"\033[?25l"   // hide cursor
+        "\033[?25l"   // hide cursor
         "\033[2J"     // clear screen
-        "\033[1;%dr", // limit scrolling to our rows
+        "\033[2;%dr", // limit scrolling to our rows
         r-1);
 
     return 0;
@@ -309,15 +335,7 @@ static int getkey() {
  */
 static void drawentry(struct listelem* e) {
     printf("\033[2K"); // clear line
-
-    if (e->selected) {
-        printf("%s ", POINTER);
-    } else {
-        for (int i = 0; i < pointerwidth; i++) {
-            printf(" ");
-        }
-    }
-
+    
     switch (e->type) {
         case ELEM_EXEC:
             printf("\033[33;1m");
@@ -337,6 +355,14 @@ static void drawentry(struct listelem* e) {
             break;
     }
 
+    if (e->selected) {
+        printf("%s ", POINTER);
+    } else {
+        for (int i = 0; i < pointerwidth; i++) {
+            printf(" ");
+        }
+    }
+
     printf("%s", e->name);
 
     if (e->type == ELEM_DIR || e->type == ELEM_DIRLINK) {
@@ -347,29 +373,44 @@ static void drawentry(struct listelem* e) {
 }
 
 /*
+ * Draws the status line at the bottom of the screen.
+ */
+static void drawstatusline(struct listelem* l, size_t n, size_t s, int r, int c) {
+    printf("\033[%d;H" // go to the bottom row
+        "\033[2K" // clear the row
+        "\033[7;1m", // inverse + bold
+        r);
+
+    int p = 0;
+    printf(" %zu/%zu" // position
+        "%n", // chars printed
+        s+1,
+        n,
+        &p);
+    // print the type of the file
+    printf("%*s ", c-p-1, elemtypestrings[l->type]);
+    printf("\r\033[m"); // move cursor back and reset formatting
+}
+
+/*
  * Draws the whole screen (redraw).
  * Use sparingly.
  */
 static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o, int r, int c) {
-    char fmt[256];
-    // use a format str to align the path and such
-    snprintf(fmt, 256,
-        "\033[2J" // clear
-        "\033[%d;H" // go to the bottom row
-        EMPHASIS "\033[7m%%-%ds" // path + count
-        "\033[m",
-        r, c);
-    char status[256];
-    snprintf(status, 256, "%zu in %s", n, wd);
+    // go to the top and print the info bar
+    printf("\033[2J" // clear
+        "\033[H" // top left
+        "\033[7;3m %-*s ", // print working directory
+        c-2, wd);
 
-    printf(fmt, status);
+    printf("\033[2;H\033[m"); // move to 2,1, reset formatting
 
-    printf("\033[H"); // move to top left
-
-    for (size_t i = o; i < n && i - o < r - 1; i++) {
+    for (size_t i = o; i < n && i - o < r - 2; i++) {
         drawentry(&(l[i]));
         printf("\n");
     }
+
+    drawstatusline(&(l[s]), n, s, r, c);
 }
 
 /*
@@ -421,7 +462,6 @@ int main(int argc, char** argv) {
             exit(EXIT_FAILURE);
         }
     } else {
-        wd = argv[1];
         if (NULL == realpath(argv[1], wd)) {
             exit(EXIT_FAILURE);
         }
@@ -431,6 +471,7 @@ int main(int argc, char** argv) {
 
     const char* editor = geteditor();
     const char* shell = getshell();
+    const char* opener = getopener();
 
     int rows, cols;
     if (termsize(&rows, &cols)) {
@@ -497,58 +538,12 @@ int main(int argc, char** argv) {
                 exit(EXIT_FAILURE);
             }
             drawscreen(wd, list, dcount, selection, pos, rows, cols);
-            printf("\033[%zu;1H", pos+1);
+            printf("\033[%zu;1H", pos+2);
             fflush(stdout);
         }
 
         int k = getkey();
-        switch (k) {
-            case 'j':
-                if (selection < dcount - 1) {
-                    list[selection].selected = 0;
-                    drawentry(&(list[selection]));
-                    selection++;
-                    if (pos < rows - 1) {
-                        pos++;
-                    }
-                    list[selection].selected = 1;
-                    printf("\r\n");
-                    drawentry(&(list[selection]));
-                    fflush(stdout);
-                }
-                break;
-            case 'k':
-                if (selection > 0) {
-                    list[selection].selected = 0;
-                    drawentry(&(list[selection]));
-                    selection--;
-                    list[selection].selected = 1;
-                    if (pos > 0) {
-                        pos--;
-                        printf("\r\033[A");
-                    } else if (pos == 0 && selection > 0) {
-                        printf("\r\033[L");
-                    }
-                    drawentry(&(list[selection]));
-                    fflush(stdout);
-                }
-                break;
-            case '\n':
-            case 'l':
-                if (list[selection].type == ELEM_DIR
-                    || list[selection].type == ELEM_DIRLINK) {
-                    if (wd[1] != '\0') {
-                        strcat(wd, "/");
-                    }
-                    strncat(wd, list[selection].name, PATH_MAX - strlen(wd) - 2);
-                    selection = 0;
-                    pos = 0;
-                    update = 1;
-                } else {
-                    execcmd(wd, editor, list[selection].name, rows);
-                    update = 1;
-                }
-                break;
+        switch(k) {
             case 'h':
                 if (parentdir(wd)) {
                     pos = 0;
@@ -566,6 +561,84 @@ int main(int argc, char** argv) {
                 pos = 0;
                 update = 1;
                 break;
+        }
+
+        if (!dcount) {
+            continue;
+        }
+
+        switch (k) {
+            case 'j':
+                if (selection < dcount - 1) {
+                    list[selection].selected = 0;
+                    drawentry(&(list[selection]));
+                    selection++;
+                    if (pos < rows - 2) {
+                        pos++;
+                    }
+                    list[selection].selected = 1;
+                    printf("\r\n");
+                    drawentry(&(list[selection]));
+                    drawstatusline(&(list[selection]), dcount, selection, rows, cols);
+                    fflush(stdout);
+                }
+                break;
+            case 'k':
+                if (selection > 0) {
+                    list[selection].selected = 0;
+                    drawentry(&(list[selection]));
+                    selection--;
+                    list[selection].selected = 1;
+                    if (pos > 0) {
+                        pos--;
+                        printf("\r\033[A");
+                    } else if (pos == 0 && selection > 0) {
+                        printf("\r\033[L");
+                    }
+                    drawentry(&(list[selection]));
+                    drawstatusline(&(list[selection]), dcount, selection, rows, cols);
+                    fflush(stdout);
+                }
+                break;
+#ifndef ENTER_OPEN
+            case '\n':
+#endif
+            case 'l':
+                if (list[selection].type == ELEM_DIR
+                    || list[selection].type == ELEM_DIRLINK) {
+                    if (wd[1] != '\0') {
+                        strcat(wd, "/");
+                    }
+                    strncat(wd, list[selection].name, PATH_MAX - strlen(wd) - 2);
+                    selection = 0;
+                    pos = 0;
+                    update = 1;
+                } else {
+                    execcmd(wd, editor, list[selection].name, rows);
+                    update = 1;
+                }
+                break;
+#ifdef ENTER_OPEN
+            case '\n':
+#endif
+#ifdef OPENER
+            case 'o':
+                if (list[selection].type == ELEM_DIR
+                    || list[selection].type == ELEM_DIRLINK) {
+                    if (wd[1] != '\0') {
+                        strcat(wd, "/");
+                    }
+                    strncat(wd, list[selection].name, PATH_MAX - strlen(wd) - 2);
+                    selection = 0;
+                    pos = 0;
+                    update = 1;
+                    break;
+                } else if (opener != NULL) {
+                    execcmd(wd, opener, list[selection].name, rows);
+                    update = 1;
+                }
+                break;
+#endif
         }
     }
 

@@ -25,13 +25,24 @@
  */
 //#define SHELL "/bin/bash"
 
-/* USE_ITALICS:
- * If not set (or 0), bold will be used in place of italics.
- * Otherwise, italics will be used.
+/* OPENER:
+ * If not set, cfm will not use an opener.
+ * Otherwise, it will use the specified opener when
+ * you use the 'o' key.
  *
- * Value: boolean (0 or 1)
+ * Value: string
  */
-//#define USE_ITALICS 1
+//#define OPENER "xdg-open"
+
+/* ENTER_OPENS:
+ * If not set, using enter will be the same as using
+ * l or right arrow on normal files, aka they will be
+ * opened with EDITOR. Otherwise, pressing enter will open
+ * a file with OPENER. No-op if OPENER not defined or NULL.
+ *
+ * Value: boolean (1 or 0)
+ */
+//#define ENTER_OPENS 0
 
 /* POINTER:
  * If not set, cfm will use "->" in front of the selected
