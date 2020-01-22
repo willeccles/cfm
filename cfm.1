@@ -1,0 +1,70 @@
+.TH CFM 1 "2020 January 22" "" ""
+
+.SH NAME
+cfm \- cactus file manager
+
+.SH SYNOPSIS
+.B cfm
+.RI [ DIR ]
+
+.SH CONFIGURATION
+Copy \fIconfig.def.h\fR to \fIconfig.h\fR and modify as needed.
+
+.SH DESCRIPTION
+.B cfm
+is a cool file manager that is fast, cool, and good. It can be configured
+only at compile\-time.
+
+.SH USAGE
+.TP
+.BI "j k"
+Move up/down
+
+.TP
+.BI "h l"
+Move left/right
+
+.TP
+.BI l
+Open file using \fIEDITOR\fR, or change into directory
+
+.TP
+.BI o
+If \fIOPENER\fR was defined and enabled at compile\-time, opens files in
+\fIOPENER\fR or changes into a directory
+
+.TP
+.BI RET
+Works like
+.BI o
+if \fIOPENER\fR and \fIENTER_OPENS\fR were enabled, else works like
+.BI l
+
+.TP
+.BI \&.
+Toggles visibility of dotfiles
+
+.TP
+.BI e
+Open file or directory in \fIEDITOR\fR
+
+.TP
+.BI r
+Reload directory
+
+.TP
+.BI s
+Spawn a shell (defined by \fISHELL\fR) in a directory
+
+.TP
+.BI "x d"
+Delete current selection
+
+.TP
+.BI q
+Quit
+.B cfm
+
+.SH AUTHOR
+Will Eccles <will@eccles.dev>.
+For more information, see https://github.com/willeccles/cfm.
