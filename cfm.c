@@ -642,6 +642,21 @@ int main(int argc, char** argv) {
                 }
                 break;
 #endif
+            case 'r':
+                selection = 0;
+                pos = 0;
+                update = 1;
+                break;
+            case 'd':
+            case 'x':
+                {
+                    // TODO fix this breaking everything
+                    char tmpbuf[PATH_MAX];
+                    snprintf(tmpbuf, PATH_MAX, "%s/%s", wd, list[selection].name);
+                    remove(tmpbuf);
+                    update = 1;
+                }
+                break;
         }
     }
 
