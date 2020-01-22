@@ -179,7 +179,7 @@ static int setupterm(int r) {
     printf(
         "\033[?1049h" // use alternative screen buffer
         "\033[?7l"    // disable line wrapping
-        "\033[?25l"   // hide cursor
+        //"\033[?25l"   // hide cursor
         "\033[2J"     // clear screen
         "\033[2;%dr", // limit scrolling to our rows
         r-1);
@@ -376,7 +376,8 @@ static void drawentry(struct listelem* e) {
  * Draws the status line at the bottom of the screen.
  */
 static void drawstatusline(struct listelem* l, size_t n, size_t s, int r, int c) {
-    printf("\033[%d;H" // go to the bottom row
+    printf("\033[s" // save location of cursor
+        "\033[%d;H" // go to the bottom row
         "\033[2K" // clear the row
         "\033[7;1m", // inverse + bold
         r);
@@ -389,7 +390,7 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s, int r, int c)
         &p);
     // print the type of the file
     printf("%*s ", c-p-1, elemtypestrings[l->type]);
-    printf("\r\033[m"); // move cursor back and reset formatting
+    printf("\033[u\033[m"); // move cursor back and reset formatting
 }
 
 /*
@@ -403,11 +404,11 @@ static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t 
         "\033[7;3m %-*s ", // print working directory
         c-2, wd);
 
-    printf("\033[2;H\033[m"); // move to 2,1, reset formatting
+    printf("\033[m"); // reset formatting
 
-    for (size_t i = o; i < n && i - o < r - 2; i++) {
+    for (size_t i = s - o; i < n && (int)i - (int)o < r - 2; i++) {
+        printf("\r\n");
         drawentry(&(l[i]));
-        printf("\n");
     }
 
     drawstatusline(&(l[s]), n, s, r, c);
@@ -524,11 +525,12 @@ int main(int argc, char** argv) {
     while (1) {
         if (update) {
             update = 0;
+            list[selection].selected = 0;
             dcount = listdir(wd, &list, &listsize, showhidden);
-            list[selection].selected = 1;
             if (selection >= dcount) {
                 selection = dcount - 1;
             }
+            list[selection].selected = 1;
             redraw = 1;
         }
 
@@ -573,13 +575,13 @@ int main(int argc, char** argv) {
                     list[selection].selected = 0;
                     drawentry(&(list[selection]));
                     selection++;
-                    if (pos < rows - 2) {
-                        pos++;
-                    }
-                    list[selection].selected = 1;
                     printf("\r\n");
+                    list[selection].selected = 1;
                     drawentry(&(list[selection]));
                     drawstatusline(&(list[selection]), dcount, selection, rows, cols);
+                    if (pos < rows - 3) {
+                        pos++;
+                    }
                     fflush(stdout);
                 }
                 break;
@@ -592,7 +594,7 @@ int main(int argc, char** argv) {
                     if (pos > 0) {
                         pos--;
                         printf("\r\033[A");
-                    } else if (pos == 0 && selection > 0) {
+                    } else {
                         printf("\r\033[L");
                     }
                     drawentry(&(list[selection]));
