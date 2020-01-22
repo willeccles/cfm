@@ -447,6 +447,7 @@ int main(int argc, char** argv) {
     }
 
     uint8_t update = 1;
+    uint8_t showhidden = 0;
     size_t selection = 0,
            pos = 0,
            dcount = 0;
@@ -455,7 +456,7 @@ int main(int argc, char** argv) {
     while (1) {
         if (update) {
             update = 0;
-            dcount = listdir(wd, &list, &listsize, 1);
+            dcount = listdir(wd, &list, &listsize, showhidden);
             selection = 0;
             pos = 0;
             list[selection].selected = 1;
@@ -503,6 +504,10 @@ int main(int argc, char** argv) {
                 break;
             case 'q':
                 exit(EXIT_SUCCESS);
+                break;
+            case '.':
+                showhidden = !showhidden;
+                redraw = 1;
                 break;
         }
     }
