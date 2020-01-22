@@ -186,6 +186,9 @@ static void execcmd(const char* path, const char* cmd, const char* arg, int r) {
     if (pid < 0) {
         return;
     }
+    
+    resetterm();
+    fflush(stdout);
 
     if (pid == 0) {
         if (chdir(path) < 0) {
@@ -201,6 +204,7 @@ static void execcmd(const char* path, const char* cmd, const char* arg, int r) {
     }
 
     setupterm(r);
+    fflush(stdout);
 }
 
 /*
@@ -304,6 +308,8 @@ static int getkey() {
  * Draws one element to the screen.
  */
 static void drawentry(struct listelem* e) {
+    printf("\033[2K"); // clear line
+
     if (e->selected) {
         printf("%s ", POINTER);
     } else {
@@ -314,13 +320,15 @@ static void drawentry(struct listelem* e) {
 
     switch (e->type) {
         case ELEM_EXEC:
-            printf("\033[33m");
+            printf("\033[33;1m");
             break;
         case ELEM_DIR:
-            printf("\033[32m");
+            printf("\033[32;1m");
+            break;
+        case ELEM_DIRLINK:
+            printf("\033[36;1m");
             break;
         case ELEM_LINK:
-        case ELEM_DIRLINK:
             printf("\033[36m");
             break;
         case ELEM_FILE:
@@ -375,7 +383,7 @@ static void sigdie(int UNUSED(sig)) {
  * Signal handler for window resize.
  */
 static void sigresize(int UNUSED(sig)) {
-
+    redraw = 1;
 }
 
 int main(int argc, char** argv) {
@@ -457,14 +465,18 @@ int main(int argc, char** argv) {
         if (update) {
             update = 0;
             dcount = listdir(wd, &list, &listsize, showhidden);
-            selection = 0;
-            pos = 0;
             list[selection].selected = 1;
+            if (selection >= dcount) {
+                selection = dcount - 1;
+            }
             redraw = 1;
         }
 
         if (redraw) {
             redraw = 0;
+            if (termsize(&rows, &cols)) {
+                exit(EXIT_FAILURE);
+            }
             drawscreen(wd, list, dcount, selection, pos, rows, cols);
             printf("\033[%zu;1H", pos+1);
             fflush(stdout);
@@ -477,7 +489,7 @@ int main(int argc, char** argv) {
                     list[selection].selected = 0;
                     drawentry(&(list[selection]));
                     selection++;
-                    if (pos < rows) {
+                    if (pos < rows - 1) {
                         pos++;
                     }
                     list[selection].selected = 1;
@@ -502,12 +514,26 @@ int main(int argc, char** argv) {
                     fflush(stdout);
                 }
                 break;
+            case '\n':
+            case 'l':
+                if (list[selection].type == ELEM_DIR
+                    || list[selection].type == ELEM_DIRLINK) {
+                    strncat(wd, list[selection].name, PATH_MAX - strlen(wd) - 1);
+                    update = 1;
+                } else {
+                    execcmd(wd, editor, list[selection].name, rows);
+                    update = 1;
+                }
+                break;
             case 'q':
                 exit(EXIT_SUCCESS);
                 break;
             case '.':
                 showhidden = !showhidden;
-                redraw = 1;
+                list[selection].selected = 0;
+                selection = 0;
+                pos = 0;
+                update = 1;
                 break;
         }
     }
