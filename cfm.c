@@ -58,6 +58,26 @@ static uint8_t redraw = 0;
 static int pointerwidth = 2;
 
 /*
+ * Comparison function for list elements for qsort.
+ */
+static int elemcmp(const void* a, const void* b) {
+    const struct listelem* x = a;
+    const struct listelem* y = b;
+
+    if ((x->type == ELEM_DIR || x->type == ELEM_DIRLINK) &&
+        (y->type != ELEM_DIR && y->type != ELEM_DIRLINK)) {
+        return -1;
+    }
+
+    if ((y->type == ELEM_DIR || y->type == ELEM_DIRLINK) &&
+        (x->type != ELEM_DIR && x->type != ELEM_DIRLINK)) {
+        return 1;
+    }
+
+    return strcmp(x->name, y->name);
+}
+
+/*
  * Get editor.
  */
 static const char* geteditor() {
@@ -133,10 +153,10 @@ static int setupterm(int r) {
     printf(
         "\033[?1049h" // use alternative screen buffer
         "\033[?7l"    // disable line wrapping
-        "\033[?25l"   // hide cursor
+        //"\033[?25l"   // hide cursor
         "\033[2J"     // clear screen
-        "\033[3;%dr", // limit scrolling to our rows
-        r);
+        "\033[1;%dr", // limit scrolling to our rows
+        r-1);
 
     return 0;
 }
@@ -244,7 +264,7 @@ static size_t listdir(const char* path, struct listelem** list, size_t* listsize
         }
 
         closedir(d);
-        // TODO sort the list
+        qsort(*list, count, sizeof(**list), elemcmp);
     }
 
     return count;
@@ -309,9 +329,13 @@ static void drawentry(struct listelem* e) {
             break;
     }
 
-    printf("%s\033[m", e->name);
+    printf("%s", e->name);
 
-    printf("\033[G"); // cursor to column 1
+    if (e->type == ELEM_DIR || e->type == ELEM_DIRLINK) {
+        printf("/");
+    }
+
+    printf("\033[m\r"); // cursor to column 1
 }
 
 /*
@@ -334,12 +358,10 @@ static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t 
 
     printf("\033[H"); // move to top left
 
-    for (size_t i = o; i < n && i - o < r - 2; i++) {
+    for (size_t i = o; i < n && i - o < r - 1; i++) {
         drawentry(&(l[i]));
-        printf("\n\r");
+        printf("\n");
     }
-
-    fflush(stdout);
 }
 
 /*
@@ -433,15 +455,18 @@ int main(int argc, char** argv) {
     while (1) {
         if (update) {
             update = 0;
-            dcount = listdir(wd, &list, &listsize, 0);
+            dcount = listdir(wd, &list, &listsize, 1);
             selection = 0;
+            pos = 0;
             list[selection].selected = 1;
             redraw = 1;
         }
+
         if (redraw) {
             redraw = 0;
             drawscreen(wd, list, dcount, selection, pos, rows, cols);
-            printf("\033[%zu;1H", selection+1);
+            printf("\033[%zu;1H", pos+1);
+            fflush(stdout);
         }
 
         k = getkey();
@@ -451,8 +476,11 @@ int main(int argc, char** argv) {
                     list[selection].selected = 0;
                     drawentry(&(list[selection]));
                     selection++;
+                    if (pos < rows) {
+                        pos++;
+                    }
                     list[selection].selected = 1;
-                    printf("\033[E");
+                    printf("\r\n");
                     drawentry(&(list[selection]));
                     fflush(stdout);
                 }
@@ -463,10 +491,18 @@ int main(int argc, char** argv) {
                     drawentry(&(list[selection]));
                     selection--;
                     list[selection].selected = 1;
-                    printf("\033[L");
+                    if (pos > 0) {
+                        pos--;
+                        printf("\r\033[A");
+                    } else if (pos == 0 && selection > 0) {
+                        printf("\r\033[L");
+                    }
                     drawentry(&(list[selection]));
                     fflush(stdout);
                 }
+                break;
+            case 'q':
+                exit(EXIT_SUCCESS);
                 break;
         }
     }
