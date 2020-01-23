@@ -9,6 +9,8 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
+#include <stdatomic.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +20,6 @@
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
-#include <stdatomic.h>
 
 // include user config
 #include "config.h"
@@ -71,13 +72,13 @@ static const char* elemtypestrings[] = {
 struct listelem {
     enum elemtype type;
     char name[NAME_MAX];
-    uint8_t selected;
+    bool selected;
 };
 
 #define E_DIR(t) ((t)==ELEM_DIR || (t)==ELEM_DIRLINK)
 
 static struct termios old_term;
-static atomic_bool redraw = 0;
+static atomic_bool redraw = false;
 static int rows, cols;
 static int pointerwidth = 2;
 
@@ -243,7 +244,7 @@ static void execcmd(const char* path, const char* cmd, const char* arg) {
 /*
  * Reads a directory into the list, returning the number of items in the dir.
  */
-static size_t listdir(const char* path, struct listelem** list, size_t* listsize, uint8_t hidden) {
+static size_t listdir(const char* path, struct listelem** list, size_t* listsize, bool hidden) {
     DIR* d;
     struct dirent* dir;
     d = opendir(path);
@@ -271,7 +272,7 @@ static size_t listdir(const char* path, struct listelem** list, size_t* listsize
 
             strncpy((*list)[count].name, dir->d_name, NAME_MAX);
 
-            (*list)[count].selected = 0;
+            (*list)[count].selected = false;
 
             if (0 != fstatat(dfd, dir->d_name, &st, AT_SYMLINK_NOFOLLOW)) {
                 continue;
@@ -462,7 +463,7 @@ static void sigdie(int UNUSED(sig)) {
  * Signal handler for window resize.
  */
 static void sigresize(int UNUSED(sig)) {
-    redraw = 1;
+    redraw = true;
 }
 
 int main(int argc, char** argv) {
@@ -532,8 +533,8 @@ int main(int argc, char** argv) {
         exit(EXIT_FAILURE);
     }
 
-    uint8_t update = 1;
-    uint8_t showhidden = 0;
+    bool update = true;
+    bool showhidden = false;
     size_t selection = 0,
            pos = 0,
            dcount = 0;
@@ -542,8 +543,8 @@ int main(int argc, char** argv) {
     int k, pk;
     while (1) {
         if (update) {
-            update = 0;
-            list[selection].selected = 0;
+            update = true;
+            list[selection].selected = false;
             newdcount = listdir(wd, &list, &listsize, showhidden);
             if (!newdcount) {
                 pos = 0;
@@ -560,14 +561,14 @@ int main(int argc, char** argv) {
                 if (selection >= newdcount) {
                     selection = newdcount - 1;
                 }
-                list[selection].selected = 1;
+                list[selection].selected = true;
             }
             dcount = newdcount;
-            redraw = 1;
+            redraw = true;
         }
 
         if (redraw) {
-            redraw = 0;
+            redraw = false;
             if (termsize()) {
                 exit(EXIT_FAILURE);
             }
@@ -582,7 +583,7 @@ int main(int argc, char** argv) {
                 if (parentdir(wd)) {
                     pos = 0;
                     selection = 0;
-                    update = 1;
+                    update = true;
                 }
                 break;
             case '\033':
@@ -591,18 +592,18 @@ int main(int argc, char** argv) {
                 break;
             case '.':
                 showhidden = !showhidden;
-                list[selection].selected = 0;
+                list[selection].selected = false;
                 selection = 0;
                 pos = 0;
-                update = 1;
+                update = true;
                 break;
             case 'r':
-                update = 1;
+                update = true;
                 break;
             case 's':
                 if (shell != NULL) {
                     execcmd(wd, shell, NULL);
-                    update = 1;
+                    update = true;
                 }
                 break;
         }
@@ -615,11 +616,11 @@ int main(int argc, char** argv) {
         switch (k) {
             case 'j':
                 if (selection < dcount - 1) {
-                    list[selection].selected = 0;
+                    list[selection].selected = false;
                     drawentry(&(list[selection]));
                     selection++;
                     printf("\r\n");
-                    list[selection].selected = 1;
+                    list[selection].selected = true;
                     drawentry(&(list[selection]));
                     drawstatusline(&(list[selection]), dcount, selection);
                     if (pos < rows - 3) {
@@ -630,10 +631,10 @@ int main(int argc, char** argv) {
                 break;
             case 'k':
                 if (selection > 0) {
-                    list[selection].selected = 0;
+                    list[selection].selected = false;
                     drawentry(&(list[selection]));
                     selection--;
-                    list[selection].selected = 1;
+                    list[selection].selected = true;
                     if (pos > 0) {
                         pos--;
                         printf("\r\033[A");
@@ -649,23 +650,23 @@ int main(int argc, char** argv) {
                 if (pk != 'g') {
                     break;
                 }
-                list[selection].selected = 0;
+                list[selection].selected = false;
                 pos = 0;
                 selection = 0;
-                list[selection].selected = 1;
-                redraw = 1;
+                list[selection].selected = true;
+                redraw = true;
                 pk = 0;
                 break;
             case 'G':
-                list[selection].selected = 0;
+                list[selection].selected = false;
                 selection = dcount - 1;
-                list[selection].selected = 1;
+                list[selection].selected = true;
                 if (dcount > rows - 2) {
                     pos = rows - 3;
                 } else {
                     pos = selection;
                 }
-                redraw = 1;
+                redraw = true;
                 break;
 #ifndef ENTER_OPEN
             case '\n':
@@ -679,10 +680,10 @@ int main(int argc, char** argv) {
                     strncat(wd, list[selection].name, PATH_MAX - strlen(wd) - 2);
                     selection = 0;
                     pos = 0;
-                    update = 1;
+                    update = true;
                 } else {
                     execcmd(wd, editor, list[selection].name);
-                    update = 1;
+                    update = true;
                 }
                 break;
 #ifdef ENTER_OPEN
@@ -698,12 +699,12 @@ int main(int argc, char** argv) {
                     strncat(wd, list[selection].name, PATH_MAX - strlen(wd) - 2);
                     selection = 0;
                     pos = 0;
-                    update = 1;
+                    update = true;
                     break;
                 } else if (opener != NULL) {
                     if (editor != NULL) {
                         execcmd(wd, opener, list[selection].name);
-                        update = 1;
+                        update = true;
                     }
                 }
                 break;
@@ -716,14 +717,14 @@ int main(int argc, char** argv) {
                     char tmpbuf[PATH_MAX];
                     snprintf(tmpbuf, PATH_MAX, "%s/%s", wd, list[selection].name);
                     remove(tmpbuf);
-                    update = 1;
+                    update = true;
                 }
                 pk = 0;
                 break;
             case 'e':
                 if (editor != NULL) {
                     execcmd(wd, editor, list[selection].name);
-                    update = 1;
+                    update = true;
                 }
                 break;
         }
