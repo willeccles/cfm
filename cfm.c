@@ -39,7 +39,7 @@
 #define LIST_ALLOC_SIZE 64
 
 #ifndef POINTER
-# define POINTER "-> "
+# define POINTER "->"
 #endif /* POINTER */
 
 #ifdef OPENER
@@ -281,7 +281,7 @@ static size_t listdir(const char* path, struct listelem** list, size_t* listsize
             if (S_ISDIR(st.st_mode)) {
                 (*list)[count].type = ELEM_DIR;
             } else if (S_ISLNK(st.st_mode)) {
-                if (0 != fstatat(dfd, dir->d_name, &st, 0)) {
+                if (0 == fstatat(dfd, dir->d_name, &st, 0)) {
                     if (S_ISDIR(st.st_mode)) {
                         (*list)[count].type = ELEM_DIRLINK;
                     } else {
@@ -369,19 +369,25 @@ static void drawentry(struct listelem* e) {
     }
 #endif
     
+#if defined INDENT_SELECTION && INDENT_SELECTION
+    if (e->selected) {
+        printf("%s", POINTER);
+    }
+#else
     printf("%-*s", pointerwidth, e->selected ? POINTER : "");
+#endif
 
 #if defined INVERT_SELECTION && INVERT_SELECTION
     if (e->selected) {
-        printf("%s%-*s", e->name, cols, E_DIR(e->type) ? "/" : "");
+        printf(" %s%-*s", e->name, cols, E_DIR(e->type) ? "/" : "");
     } else {
-        printf("%s", e->name);
+        printf(" %s", e->name);
         if (E_DIR(e->type)) {
             printf("/");
         }
     }
 #else
-    printf("%s", e->name);
+    printf(" %s", e->name);
     if (E_DIR(e->type)) {
         printf("/");
     }
@@ -417,10 +423,13 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s) {
  */
 static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o) {
     // go to the top and print the info bar
+    int p;
     printf("\033[2J" // clear
         "\033[H" // top left
-        "\033[7;3m %-*s ", // print working directory
-        cols-2, wd);
+        "\033[7;1m"); // style
+    printf(" %s%n", // print working directory
+        wd, &p);
+    printf("%-*s", (int)(cols - p), "/");
 
     printf("\033[m"); // reset formatting
 

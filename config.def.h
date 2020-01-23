@@ -60,4 +60,13 @@
  */
 //#define INVERT_SELECTION 0
 
+/* INDENT_SELECTION:
+ * If not set, all lines will be indented enough to make room
+ * for the pointer, regardless of being selected or not.
+ * If set, only the selected line will be indented.
+ *
+ * Value: boolean (1 or 0)
+ */
+//#define INDENT_SELECTION 0
+
 #endif
