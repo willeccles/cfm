@@ -117,15 +117,13 @@ static const char* geteditor() {
  */
 static const char* getshell() {
 #ifdef SHELL
-    return SHELL " -i";
+    return SHELL;
 #else
     const char* res = getenv("SHELL");
     if (!res) {
         return NULL;
     }
-    char* s = malloc(PATH_MAX);
-    snprintf(s, PATH_MAX, "%s -i", res);
-    return s;
+    return res;
 #endif /* SHELL */
 }
 
@@ -487,7 +485,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    pointerwidth = strlen(POINTER) + 1;
+    pointerwidth = strlen(POINTER);
 
     const char* editor = geteditor();
     const char* shell = getshell();
@@ -587,6 +585,7 @@ int main(int argc, char** argv) {
                     update = 1;
                 }
                 break;
+            case '\033':
             case 'q':
                 exit(EXIT_SUCCESS);
                 break;
@@ -599,6 +598,12 @@ int main(int argc, char** argv) {
                 break;
             case 'r':
                 update = 1;
+                break;
+            case 's':
+                if (shell != NULL) {
+                    execcmd(wd, shell, NULL);
+                    update = 1;
+                }
                 break;
         }
 
@@ -696,8 +701,10 @@ int main(int argc, char** argv) {
                     update = 1;
                     break;
                 } else if (opener != NULL) {
-                    execcmd(wd, opener, list[selection].name);
-                    update = 1;
+                    if (editor != NULL) {
+                        execcmd(wd, opener, list[selection].name);
+                        update = 1;
+                    }
                 }
                 break;
 #endif
@@ -714,8 +721,10 @@ int main(int argc, char** argv) {
                 pk = 0;
                 break;
             case 'e':
-                execcmd(wd, editor, list[selection].name);
-                update = 1;
+                if (editor != NULL) {
+                    execcmd(wd, editor, list[selection].name);
+                    update = 1;
+                }
                 break;
         }
 
