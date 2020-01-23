@@ -29,14 +29,11 @@ If you have installed the manpage, RTFM. Basic overview:
 | j | Move down |
 | k | Move up |
 | l | Enter directory, or open file in `EDITOR` |
-| dd | Delete currently selected file or directory (there is no confirmation, be
-careful) |
+| dd | Delete currently selected file or directory (there is no confirmation, be careful) |
 | r | Reload the current directory |
 | e | Open currently selected file or directory in `EDITOR` |
-| o | Open currently selected file in `OPENER`, or change directory to selected
-directory |
-| RET | If an `OPENER` and `ENTER_OPENS` are both enabled in `config.h`, return
-works like o; else, return works like l |
+| o | Open currently selected file in `OPENER`, or change directory to selected directory |
+| RET | If an `OPENER` and `ENTER_OPENS` are both enabled in `config.h`, return works like o; else, return works like l |
 | gg | Move to top |
 | G | Move to bottom |
 
