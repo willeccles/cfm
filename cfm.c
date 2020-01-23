@@ -359,7 +359,7 @@ static void drawentry(struct listelem* e) {
             break;
         case ELEM_FILE:
         default:
-            printf("\033[m");
+            printf("\033[37m");
             break;
     }
 
@@ -403,7 +403,7 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s) {
     printf("\033[s" // save location of cursor
         "\033[%d;H" // go to the bottom row
         "\033[2K" // clear the row
-        "\033[7;1m", // inverse + bold
+        "\033[37;7;1m", // inverse + bold
         rows);
 
     int p = 0;
@@ -426,7 +426,7 @@ static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t 
     int p;
     printf("\033[2J" // clear
         "\033[H" // top left
-        "\033[7;1m"); // style
+        "\033[37;7;1m"); // style
     printf(" %s%n", // print working directory
         wd, &p);
     printf("%-*s", (int)(cols - p), (wd[1] == '\0') ? "" : "/");
