@@ -13,4 +13,4 @@ install:
 	install -m644 $(MANPAGE) $(DESTDIR)$(PREFIX)/share/man/man1/$(MANPAGE)
 
 clean:
-	$(RM) -f $(OUTPUT)
+	$(RM) $(TARGET)

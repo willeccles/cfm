@@ -52,4 +52,12 @@
  */
 //#define POINTER "->"
 
+/* INVERT_SELECTION:
+ * If set, cfm will reverse the foreground/background colors
+ * of the currently selected item.
+ *
+ * Value: boolean (1 or 0)
+ */
+//#define INVERT_SELECTION 0
+
 #endif

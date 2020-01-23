@@ -78,6 +78,7 @@ struct listelem {
 
 static struct termios old_term;
 static atomic_bool redraw = 0;
+static int rows, cols;
 static int pointerwidth = 2;
 
 /*
@@ -155,15 +156,15 @@ static int backupterm() {
  * Get the size of the terminal.
  * Returns 0 on success.
  */
-static int termsize(int* r, int* c) {
+static int termsize() {
     struct winsize ws;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) < 0) {
         perror("ioctl");
         return 1;
     }
 
-    *r = ws.ws_row;
-    *c = ws.ws_col;
+    rows = ws.ws_row;
+    cols = ws.ws_col;
 
     return 0;
 }
@@ -172,7 +173,7 @@ static int termsize(int* r, int* c) {
  * Sets up the terminal for TUI.
  * Return 0 on success.
  */
-static int setupterm(int r) {
+static int setupterm() {
     setvbuf(stdout, NULL, _IOFBF, 0);
     
     struct termios new_term = old_term;
@@ -187,10 +188,10 @@ static int setupterm(int r) {
     printf(
         "\033[?1049h" // use alternative screen buffer
         "\033[?7l"    // disable line wrapping
-        //"\033[?25l"   // hide cursor
+        "\033[?25l"   // hide cursor
         "\033[2J"     // clear screen
         "\033[2;%dr", // limit scrolling to our rows
-        r-1);
+        rows-1);
 
     return 0;
 }
@@ -215,7 +216,7 @@ static void resetterm() {
 /*
  * Creates a child process.
  */
-static void execcmd(const char* path, const char* cmd, const char* arg, int r) {
+static void execcmd(const char* path, const char* cmd, const char* arg) {
     pid_t pid = fork();
     if (pid < 0) {
         return;
@@ -237,7 +238,7 @@ static void execcmd(const char* path, const char* cmd, const char* arg, int r) {
         } while (!WIFEXITED(s) && !WIFSIGNALED(s));
     }
 
-    setupterm(r);
+    setupterm();
     fflush(stdout);
 }
 
@@ -363,19 +364,29 @@ static void drawentry(struct listelem* e) {
             break;
     }
 
+#if defined INVERT_SELECTION && INVERT_SELECTION
     if (e->selected) {
-        printf("%s ", POINTER);
+        printf("\033[7m");
+    }
+#endif
+    
+    printf("%-*s ", pointerwidth, e->selected ? POINTER : "");
+
+#if defined INVERT_SELECTION && INVERT_SELECTION
+    if (e->selected) {
+        printf("%s%-*s", e->name, cols, E_DIR(e->type) ? "/" : "");
     } else {
-        for (int i = 0; i < pointerwidth; i++) {
-            printf(" ");
+        printf("%s", e->name);
+        if (E_DIR(e->type)) {
+            printf("/");
         }
     }
-
+#else
     printf("%s", e->name);
-
-    if (e->type == ELEM_DIR || e->type == ELEM_DIRLINK) {
+    if (E_DIR(e->type)) {
         printf("/");
     }
+#endif
 
     printf("\033[m\r"); // cursor to column 1
 }
@@ -383,12 +394,12 @@ static void drawentry(struct listelem* e) {
 /*
  * Draws the status line at the bottom of the screen.
  */
-static void drawstatusline(struct listelem* l, size_t n, size_t s, int r, int c) {
+static void drawstatusline(struct listelem* l, size_t n, size_t s) {
     printf("\033[s" // save location of cursor
         "\033[%d;H" // go to the bottom row
         "\033[2K" // clear the row
         "\033[7;1m", // inverse + bold
-        r);
+        rows);
 
     int p = 0;
     printf(" %zu/%zu" // position
@@ -397,7 +408,7 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s, int r, int c)
         n,
         &p);
     // print the type of the file
-    printf("%*s ", c-p-1, elemtypestrings[l->type]);
+    printf("%*s ", cols-p-1, elemtypestrings[l->type]);
     printf("\033[u\033[m"); // move cursor back and reset formatting
 }
 
@@ -405,21 +416,21 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s, int r, int c)
  * Draws the whole screen (redraw).
  * Use sparingly.
  */
-static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o, int r, int c) {
+static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o) {
     // go to the top and print the info bar
     printf("\033[2J" // clear
         "\033[H" // top left
         "\033[7;3m %-*s ", // print working directory
-        c-2, wd);
+        cols-2, wd);
 
     printf("\033[m"); // reset formatting
 
-    for (size_t i = s - o; i < n && (int)i - (int)o < r - 2; i++) {
+    for (size_t i = s - o; i < n && (int)i - (int)o < rows - 2; i++) {
         printf("\r\n");
         drawentry(&(l[i]));
     }
 
-    drawstatusline(&(l[s]), n, s, r, c);
+    drawstatusline(&(l[s]), n, s);
 }
 
 /*
@@ -482,8 +493,7 @@ int main(int argc, char** argv) {
     const char* shell = getshell();
     const char* opener = getopener();
 
-    int rows, cols;
-    if (termsize(&rows, &cols)) {
+    if (termsize()) {
         exit(EXIT_FAILURE);
     }
 
@@ -511,7 +521,7 @@ int main(int argc, char** argv) {
         exit(EXIT_FAILURE);
     }
 
-    if (setupterm(rows)) {
+    if (setupterm()) {
         exit(EXIT_FAILURE);
     }
 
@@ -544,10 +554,10 @@ int main(int argc, char** argv) {
 
         if (redraw) {
             redraw = 0;
-            if (termsize(&rows, &cols)) {
+            if (termsize()) {
                 exit(EXIT_FAILURE);
             }
-            drawscreen(wd, list, dcount, selection, pos, rows, cols);
+            drawscreen(wd, list, dcount, selection, pos);
             printf("\033[%zu;1H", pos+2);
             fflush(stdout);
         }
@@ -586,7 +596,7 @@ int main(int argc, char** argv) {
                     printf("\r\n");
                     list[selection].selected = 1;
                     drawentry(&(list[selection]));
-                    drawstatusline(&(list[selection]), dcount, selection, rows, cols);
+                    drawstatusline(&(list[selection]), dcount, selection);
                     if (pos < rows - 3) {
                         pos++;
                     }
@@ -606,7 +616,7 @@ int main(int argc, char** argv) {
                         printf("\r\033[L");
                     }
                     drawentry(&(list[selection]));
-                    drawstatusline(&(list[selection]), dcount, selection, rows, cols);
+                    drawstatusline(&(list[selection]), dcount, selection);
                     fflush(stdout);
                 }
                 break;
@@ -624,7 +634,7 @@ int main(int argc, char** argv) {
                     pos = 0;
                     update = 1;
                 } else {
-                    execcmd(wd, editor, list[selection].name, rows);
+                    execcmd(wd, editor, list[selection].name);
                     update = 1;
                 }
                 break;
@@ -644,7 +654,7 @@ int main(int argc, char** argv) {
                     update = 1;
                     break;
                 } else if (opener != NULL) {
-                    execcmd(wd, opener, list[selection].name, rows);
+                    execcmd(wd, opener, list[selection].name);
                     update = 1;
                 }
                 break;
