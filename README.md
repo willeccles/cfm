@@ -20,7 +20,8 @@ you.
 
 ## Usage
 
-If you have installed the manpage, RTFM. Basic overview:
+This is a non-exhaustive overview. RTFM for a more comprehensive list of keys.
+The functions of some keys may be dependent on values set in `config.h`.
 
 | Key(s) | Function |
 | ------ | -------- |
@@ -30,10 +31,6 @@ If you have installed the manpage, RTFM. Basic overview:
 | k | Move up |
 | l | Enter directory, or open file in `EDITOR` |
 | dd | Delete currently selected file or directory (there is no confirmation, be careful) |
-| r | Reload the current directory |
-| e | Open currently selected file or directory in `EDITOR` |
-| o | Open currently selected file in `OPENER`, or change directory to selected directory |
-| RET | If an `OPENER` and `ENTER_OPENS` are both enabled in `config.h`, return works like o; else, return works like l |
 | gg | Move to top |
 | G | Move to bottom |
 
