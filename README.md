@@ -4,6 +4,8 @@ Cactus File manager (cfm) is a TUI file manager with some features. It's quick
 and light. Whether or not you should use it depends on whether or not you like
 the name and/or the dev, like with all software.
 
+![Example Configuration](screenshot.png)
+
 ## Configuration
 
 To configure cfm before building, you should copy `config.def.h` to `config.h`
