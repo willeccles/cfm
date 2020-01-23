@@ -429,7 +429,7 @@ static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t 
         "\033[7;1m"); // style
     printf(" %s%n", // print working directory
         wd, &p);
-    printf("%-*s", (int)(cols - p), "/");
+    printf("%-*s", (int)(cols - p), (wd[1] == '\0') ? "" : "/");
 
     printf("\033[m"); // reset formatting
 
