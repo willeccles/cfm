@@ -404,7 +404,7 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s) {
     int p = 0;
     printf(" %zu/%zu" // position
         "%n", // chars printed
-        s+1,
+        n ? s+1 : n,
         n,
         &p);
     // print the type of the file
@@ -539,16 +539,32 @@ int main(int argc, char** argv) {
     size_t selection = 0,
            pos = 0,
            dcount = 0;
+    size_t newdcount = 0;
 
+    int k, pk;
     while (1) {
         if (update) {
             update = 0;
             list[selection].selected = 0;
-            dcount = listdir(wd, &list, &listsize, showhidden);
-            if (selection >= dcount) {
-                selection = dcount - 1;
+            newdcount = listdir(wd, &list, &listsize, showhidden);
+            if (!newdcount) {
+                pos = 0;
+                selection = 0;
+            } else {
+                // lock to bottom if deleted file at top
+                if (newdcount < dcount) {
+                    if (pos == 0 && selection > 0) {
+                        if (dcount - selection == rows - 2) {
+                            selection--;
+                        }
+                    }
+                }
+                if (selection >= newdcount) {
+                    selection = newdcount - 1;
+                }
+                list[selection].selected = 1;
             }
-            list[selection].selected = 1;
+            dcount = newdcount;
             redraw = 1;
         }
 
@@ -562,7 +578,7 @@ int main(int argc, char** argv) {
             fflush(stdout);
         }
 
-        int k = getkey();
+        k = getkey();
         switch(k) {
             case 'h':
                 if (parentdir(wd)) {
@@ -581,9 +597,13 @@ int main(int argc, char** argv) {
                 pos = 0;
                 update = 1;
                 break;
+            case 'r':
+                update = 1;
+                break;
         }
 
         if (!dcount) {
+            pk = k;
             continue;
         }
 
@@ -619,6 +639,28 @@ int main(int argc, char** argv) {
                     drawstatusline(&(list[selection]), dcount, selection);
                     fflush(stdout);
                 }
+                break;
+            case 'g':
+                if (pk != 'g') {
+                    break;
+                }
+                list[selection].selected = 0;
+                pos = 0;
+                selection = 0;
+                list[selection].selected = 1;
+                redraw = 1;
+                pk = 0;
+                break;
+            case 'G':
+                list[selection].selected = 0;
+                selection = dcount - 1;
+                list[selection].selected = 1;
+                if (dcount > rows - 2) {
+                    pos = rows - 3;
+                } else {
+                    pos = selection;
+                }
+                redraw = 1;
                 break;
 #ifndef ENTER_OPEN
             case '\n':
@@ -659,21 +701,25 @@ int main(int argc, char** argv) {
                 }
                 break;
 #endif
-            case 'r':
-                selection = 0;
-                pos = 0;
-                update = 1;
-                break;
             case 'd':
-            case 'x':
+                if (pk != 'd') {
+                    break;
+                }
                 {
                     char tmpbuf[PATH_MAX];
                     snprintf(tmpbuf, PATH_MAX, "%s/%s", wd, list[selection].name);
                     remove(tmpbuf);
                     update = 1;
                 }
+                pk = 0;
+                break;
+            case 'e':
+                execcmd(wd, editor, list[selection].name);
+                update = 1;
                 break;
         }
+
+        pk = k;
     }
 
     exit(EXIT_SUCCESS);
