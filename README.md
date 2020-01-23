@@ -1,7 +1,8 @@
 # Cactus File Manager
 
-Cactus File Manager is a cool and good file manager which is fast and good and
-cool. You should use it.
+Cactus File manager (cfm) is a TUI file manager with some features. It's quick
+and light. Whether or not you should use it depends on whether or not you like
+the name and/or the dev, like with all software.
 
 ## Configuration
 
