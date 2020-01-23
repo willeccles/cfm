@@ -38,7 +38,7 @@
 #define LIST_ALLOC_SIZE 64
 
 #ifndef POINTER
-# define POINTER "->"
+# define POINTER "-> "
 #endif /* POINTER */
 
 #ifdef OPENER
@@ -370,7 +370,7 @@ static void drawentry(struct listelem* e) {
     }
 #endif
     
-    printf("%-*s ", pointerwidth, e->selected ? POINTER : "");
+    printf("%-*s", pointerwidth, e->selected ? POINTER : "");
 
 #if defined INVERT_SELECTION && INVERT_SELECTION
     if (e->selected) {
@@ -425,7 +425,7 @@ static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t 
 
     printf("\033[m"); // reset formatting
 
-    for (size_t i = s - o; i < n && (int)i - (int)o < rows - 2; i++) {
+    for (size_t i = s - o; i < n && (int)(i - (s - o)) < rows - 2; i++) {
         printf("\r\n");
         drawentry(&(l[i]));
     }
@@ -667,7 +667,6 @@ int main(int argc, char** argv) {
             case 'd':
             case 'x':
                 {
-                    // TODO fix this breaking everything
                     char tmpbuf[PATH_MAX];
                     snprintf(tmpbuf, PATH_MAX, "%s/%s", wd, list[selection].name);
                     remove(tmpbuf);
