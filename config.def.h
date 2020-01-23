@@ -45,12 +45,12 @@
 //#define ENTER_OPENS 0
 
 /* POINTER:
- * If not set, cfm will use "-> " in front of the selected
- * item. You can set a different string here, such as "> ".
+ * If not set, cfm will use "->" in front of the selected
+ * item. You can set a different string here, such as ">".
  *
  * Value: string
  */
-//#define POINTER "-> "
+//#define POINTER "->"
 
 /* INVERT_SELECTION:
  * If set, cfm will reverse the foreground/background colors
