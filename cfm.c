@@ -199,6 +199,8 @@ static int setupterm() {
  * Resets the terminal to how it was before we ruined it.
  */
 static void resetterm() {
+    setvbuf(stdout, NULL, _IOLBF, 0);
+
     if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &old_term) < 0) {
         perror("tcsetattr");
         return;
@@ -210,6 +212,7 @@ static void resetterm() {
         "\033[;r"     // reset scroll region
         "\033[?1049l" // restore main screen
     );
+    fflush(stdout);
 }
 
 /*
