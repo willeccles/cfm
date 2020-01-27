@@ -554,13 +554,14 @@ int main(int argc, char** argv) {
     bool showhidden = false;
     size_t selection = 0,
            pos = 0,
-           dcount = 0;
+           dcount = 0,
+           marks = 0;
     size_t newdcount = 0;
 
     int k, pk;
     while (1) {
         if (update) {
-            update = true;
+            update = false;
             list[selection].selected = false;
             newdcount = listdir(wd, &list, &listsize, showhidden);
             if (!newdcount) {
@@ -750,9 +751,12 @@ int main(int argc, char** argv) {
                 }
                 break;
             case 'm':
-                fprintf(stderr, "marked: %d\n", list[selection].marked);
                 list[selection].marked = !(list[selection].marked);
-                fprintf(stderr, "after marked: %d\n", list[selection].marked);
+                if (list[selection].marked) {
+                    marks++;
+                } else {
+                    marks--;
+                }
                 drawentry(&(list[selection]));
                 fflush(stdout);
                 break;
