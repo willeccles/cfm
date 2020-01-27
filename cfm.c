@@ -73,6 +73,7 @@ struct listelem {
     enum elemtype type;
     char name[NAME_MAX];
     bool selected;
+    bool marked;
 };
 
 #define E_DIR(t) ((t)==ELEM_DIR || (t)==ELEM_DIRLINK)
@@ -212,7 +213,6 @@ static void resetterm() {
         "\033[;r"     // reset scroll region
         "\033[?1049l" // restore main screen
     );
-    fflush(stdout);
 }
 
 /*
@@ -276,6 +276,7 @@ static size_t listdir(const char* path, struct listelem** list, size_t* listsize
             strncpy((*list)[count].name, dir->d_name, NAME_MAX);
 
             (*list)[count].selected = false;
+            (*list)[count].marked = false;
 
             if (0 != fstatat(dfd, dir->d_name, &st, AT_SYMLINK_NOFOLLOW)) {
                 continue;
@@ -347,23 +348,27 @@ static int getkey() {
 static void drawentry(struct listelem* e) {
     printf("\033[2K"); // clear line
     
-    switch (e->type) {
-        case ELEM_EXEC:
-            printf("\033[33;1m");
-            break;
-        case ELEM_DIR:
-            printf("\033[32;1m");
-            break;
-        case ELEM_DIRLINK:
-            printf("\033[36;1m");
-            break;
-        case ELEM_LINK:
-            printf("\033[36m");
-            break;
-        case ELEM_FILE:
-        default:
-            printf("\033[37m");
-            break;
+    if (e->marked) {
+        printf("\033[35;1m");
+    } else {
+        switch (e->type) {
+            case ELEM_EXEC:
+                printf("\033[33;1m");
+                break;
+            case ELEM_DIR:
+                printf("\033[32;1m");
+                break;
+            case ELEM_DIRLINK:
+                printf("\033[36;1m");
+                break;
+            case ELEM_LINK:
+                printf("\033[36m");
+                break;
+            case ELEM_FILE:
+            default:
+                printf("\033[37m");
+                break;
+        }
     }
 
 #if defined INVERT_SELECTION && INVERT_SELECTION
@@ -570,8 +575,13 @@ int main(int argc, char** argv) {
                         }
                     }
                 }
-                if (selection >= newdcount) {
-                    selection = newdcount - 1;
+                while (selection >= newdcount) {
+                    if (selection) {
+                        selection--;
+                        if (pos) {
+                            pos--;
+                        }
+                    }
                 }
                 list[selection].selected = true;
             }
@@ -738,6 +748,13 @@ int main(int argc, char** argv) {
                     execcmd(wd, editor, list[selection].name);
                     update = true;
                 }
+                break;
+            case 'm':
+                fprintf(stderr, "marked: %d\n", list[selection].marked);
+                list[selection].marked = !(list[selection].marked);
+                fprintf(stderr, "after marked: %d\n", list[selection].marked);
+                drawentry(&(list[selection]));
+                fflush(stdout);
                 break;
         }
 
