@@ -6,6 +6,10 @@ the name and/or the dev, like with all software.
 
 ![Example Configuration](screenshot.png)
 
+*Note: the screenshot above contains multiple non-default options, such as a
+non-default pointer, inversion on the selected line, and lack of indentation on
+the non-selected lines.*
+
 ## Configuration
 
 To configure cfm before building, you should copy `config.def.h` to `config.h`
