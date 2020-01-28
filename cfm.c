@@ -126,7 +126,12 @@ static const char* geteditor() {
 #ifdef EDITOR
     return EDITOR;
 #else
-    return getenv("EDITOR");
+    const char* e = getenv("CFM_EDITOR");
+    if (!e) {
+        return getenv("EDITOR");
+    } else {
+        return e;
+    }
 #endif /* EDITOR */
 }
 
@@ -137,11 +142,12 @@ static const char* getshell() {
 #ifdef SHELL
     return SHELL;
 #else
-    const char* res = getenv("SHELL");
+    const char* res = getenv("CFM_SHELL");
     if (!res) {
-        return NULL;
+        return getenv("SHELL");
+    } else {
+        return res;
     }
-    return res;
 #endif /* SHELL */
 }
 
@@ -152,7 +158,12 @@ static const char* getopener() {
 #ifdef OPENER
     return OPENER;
 #else
-    return getenv("OPENER");
+    const char* o = getenv("CFM_OPENER");
+    if (!o) {
+        return getenv("OPENER");
+    } else {
+        return o;
+    }
 #endif
 }
 

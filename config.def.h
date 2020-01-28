@@ -12,7 +12,7 @@
  * $EDITOR environment variable when opening
  * files.
  *
- * Default: $EDITOR
+ * Default: $CFM_EDITOR then $EDITOR
  * Value: string
  */
 //#define EDITOR "/bin/vi"
@@ -22,7 +22,7 @@
  * environment variable to open shells in a given directory.
  * Else, the specified shell will be invoked.
  *
- * Default: $SHELL
+ * Default: $CFM_SHELL then $SHELL
  * Value: string
  */
 //#define SHELL "/bin/bash"
@@ -33,7 +33,7 @@
  * Otherwise, it will use the specified opener when
  * you use the 'o' key.
  *
- * Default: $OPENER
+ * Default: $CFM_OPENER then $OPENER
  * Value: string
  */
 //#define OPENER "xdg-open"
