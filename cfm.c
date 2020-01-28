@@ -416,6 +416,7 @@ static void drawentry(struct listelem* e, bool selected) {
  * Draws the status line at the bottom of the screen.
  */
 static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m) {
+    // TODO remove u and s escapes
     printf("\033[s" // save location of cursor
         "\033[%d;H" // go to the bottom row
         "\033[2K" // clear the row
@@ -432,8 +433,8 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m) {
         printf(" (%zu marked)%n", m, &p2);
     }
     // print the type of the file
-    printf("%*s ", cols-p1-p2-1, elemtypestrings[l->type]);
-    printf("\033[u\033[m"); // move cursor back and reset formatting
+    printf("%*s \r", cols-p1-p2-1, elemtypestrings[l->type]);
+    printf("\033[m\033[u"); // move cursor back and reset formatting
 }
 
 /*
