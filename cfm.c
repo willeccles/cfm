@@ -192,7 +192,7 @@ static int setupterm() {
     printf(
         "\033[?1049h" // use alternative screen buffer
         "\033[?7l"    // disable line wrapping
-        "\033[?25l"   // hide cursor
+        //"\033[?25l"   // hide cursor
         "\033[2J"     // clear screen
         "\033[2;%dr", // limit scrolling to our rows
         rows-1);
@@ -409,16 +409,14 @@ static void drawentry(struct listelem* e, bool selected) {
         printf("\r%c", MARK_SYMBOL);
     }
 
-    printf("\033[m\r"); // cursor to column 1
+    printf("\r\033[m"); // cursor to column 1
 }
 
 /*
  * Draws the status line at the bottom of the screen.
  */
-static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m) {
-    // TODO remove u and s escapes
-    printf("\033[s" // save location of cursor
-        "\033[%d;H" // go to the bottom row
+static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m, size_t p) {
+    printf("\033[%d;H" // go to the bottom row
         "\033[2K" // clear the row
         "\033[37;7;1m", // inverse + bold
         rows);
@@ -434,7 +432,7 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m) {
     }
     // print the type of the file
     printf("%*s \r", cols-p1-p2-1, elemtypestrings[l->type]);
-    printf("\033[m\033[u"); // move cursor back and reset formatting
+    printf("\033[m\033[%zu;H", p+2); // move cursor back and reset formatting
 }
 
 /*
@@ -458,7 +456,7 @@ static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t 
         drawentry(&(l[i]), (bool)(i == s));
     }
 
-    drawstatusline(&(l[s]), n, s, m);
+    drawstatusline(&(l[s]), n, s, m, o);
 }
 
 /*
@@ -653,10 +651,10 @@ int main(int argc, char** argv) {
                     selection++;
                     printf("\n");
                     drawentry(&(list[selection]), true);
-                    drawstatusline(&(list[selection]), dcount, selection, marks);
                     if (pos < rows - 3) {
                         pos++;
                     }
+                    drawstatusline(&(list[selection]), dcount, selection, marks, pos);
                 }
                 break;
             case 'k':
@@ -670,7 +668,7 @@ int main(int argc, char** argv) {
                         printf("\r\033[L");
                     }
                     drawentry(&(list[selection]), true);
-                    drawstatusline(&(list[selection]), dcount, selection, marks);
+                    drawstatusline(&(list[selection]), dcount, selection, marks, pos);
                 }
                 break;
             case 'g':
@@ -772,7 +770,7 @@ int main(int argc, char** argv) {
                 } else {
                     marks--;
                 }
-                drawstatusline(&(list[selection]), dcount, selection, marks);
+                drawstatusline(&(list[selection]), dcount, selection, marks, rows);
                 drawentry(&(list[selection]), true);
                 break;
         }
