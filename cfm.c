@@ -43,6 +43,18 @@
 # define POINTER "->"
 #endif /* POINTER */
 
+#ifndef BOLD_POINTER
+# define BOLD_POINTER 1
+#endif
+
+#ifndef INVERT_SELECTION
+# define INVERT_SELECTION 1
+#endif
+
+#ifndef INDENT_SELECTION
+# define INDENT_SELECTION 1
+#endif
+
 #ifdef OPENER
 # if defined ENTER_OPENS && ENTER_OPENS
 #  define ENTER_OPEN
@@ -55,7 +67,7 @@
 #endif
 
 #ifndef MARK_SYMBOL
-# define MARK_SYMBOL '+'
+# define MARK_SYMBOL '!'
 #endif
 
 enum elemtype {
@@ -140,7 +152,7 @@ static const char* getopener() {
 #ifdef OPENER
     return OPENER;
 #else
-    return NULL;
+    return getenv("OPENER");
 #endif
 }
 
@@ -352,18 +364,27 @@ static int getkey() {
 static void drawentry(struct listelem* e, bool selected) {
     printf("\033[2K"); // clear line
     
+#if BOLD_POINTER
+# define PBOLD printf("\033[1m")
+#else
+# define PBOLD
+#endif
     if (e->marked) {
-        printf("\033[35;1m");
+        printf("\033[35m");
+        PBOLD;
     } else {
         switch (e->type) {
             case ELEM_EXEC:
-                printf("\033[33;1m");
+                printf("\033[33m");
+                PBOLD;
                 break;
             case ELEM_DIR:
-                printf("\033[32;1m");
+                printf("\033[32m");
+                PBOLD;
                 break;
             case ELEM_DIRLINK:
-                printf("\033[36;1m");
+                printf("\033[36m");
+                PBOLD;
                 break;
             case ELEM_LINK:
                 printf("\033[36m");
@@ -374,14 +395,15 @@ static void drawentry(struct listelem* e, bool selected) {
                 break;
         }
     }
+#undef PBOLD
 
-#if defined INVERT_SELECTION && INVERT_SELECTION
+#if INVERT_SELECTION
     if (selected) {
         printf("\033[7m");
     }
 #endif
     
-#if defined INDENT_SELECTION && INDENT_SELECTION
+#if INDENT_SELECTION
     if (selected) {
         printf("%s", POINTER);
     }
@@ -389,7 +411,19 @@ static void drawentry(struct listelem* e, bool selected) {
     printf("%-*s", pointerwidth, selected ? POINTER : "");
 #endif
 
-#if defined INVERT_SELECTION && INVERT_SELECTION
+#if !BOLD_POINTER
+    if (e->marked) {
+        printf("\033[1m");
+    } else {
+        if (e->type == ELEM_EXEC
+            || e->type == ELEM_DIR
+            || e->type == ELEM_DIRLINK) {
+            printf("\033[1m");
+        }
+    }
+#endif
+
+#if INVERT_SELECTION
     if (selected) {
         printf(" %s%-*s", e->name, cols, E_DIR(e->type) ? "/" : "");
     } else {
@@ -770,7 +804,7 @@ int main(int argc, char** argv) {
                 } else {
                     marks--;
                 }
-                drawstatusline(&(list[selection]), dcount, selection, marks, rows);
+                drawstatusline(&(list[selection]), dcount, selection, marks, pos);
                 drawentry(&(list[selection]), true);
                 break;
         }
