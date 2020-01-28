@@ -6,6 +6,7 @@
  */
 
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
@@ -274,15 +275,17 @@ static void execcmd(const char* path, const char* cmd, const char* arg) {
 
 /*
  * Reads a directory into the list, returning the number of items in the dir.
+ * This will return 0 on success.
+ * On failure, 'opendir' will have set 'errno'.
  */
-static size_t listdir(const char* path, struct listelem** list, size_t* listsize, bool hidden) {
+static int listdir(const char* path, struct listelem** list, size_t* listsize, size_t* rcount, bool hidden) {
     DIR* d;
     struct dirent* dir;
     d = opendir(path);
     size_t count = 0;
     struct stat st;
-    int dfd = dirfd(d);
     if (d) {
+        int dfd = dirfd(d);
         while ((dir = readdir(d)) != NULL) {
             if (dir->d_name[0] == '.' && (dir->d_name[1] == '\0' || (dir->d_name[1] == '.' && dir->d_name[2] == '\0'))) {
                 continue;
@@ -334,9 +337,12 @@ static size_t listdir(const char* path, struct listelem** list, size_t* listsize
 
         closedir(d);
         qsort(*list, count, sizeof(**list), elemcmp);
+    } else {
+        return -1;
     }
 
-    return count;
+    *rcount = count;
+    return 0;
 }
 
 /*
@@ -425,7 +431,6 @@ static void drawentry(struct listelem* e, bool selected) {
 #if !BOLD_POINTER
     if (e->marked) {
         printf("\033[1m");
-    } else {
         if (e->type == ELEM_EXEC
             || e->type == ELEM_DIR
             || e->type == ELEM_DIRLINK) {
@@ -481,6 +486,20 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m, siz
 }
 
 /*
+ * Draws the statusline with an error message in it.
+ */
+static void drawstatuslineerror(const char* prefix, const char* error, size_t p) {
+    printf("\033[%d;H"
+        "\033[2K"
+        "\033[31;7;1m",
+        rows);
+    int n;
+    printf(" %s: %n", prefix, &n);
+    printf("%-*s\r", cols-n-1, error);
+    printf("\033[m\033[%zu;H", p+2);
+}
+
+/*
  * Draws the whole screen (redraw).
  * Use sparingly.
  */
@@ -522,6 +541,21 @@ static int parentdir(char* path) {
     }
 
     return 1;
+}
+
+/*
+ * Returns a pointer tothe last element of the given path,
+ * i.e. in /a/b/c it will return c. This is not a copied string,
+ * but rather a pointer to the location in 'path'.
+ * Will return 'path' if the path is "/"
+ */
+static const char* fname(const char* path) {
+    char* last = strrchr(path, '/');
+    if (last == path && path[1] == '\0') {
+        return path;
+    }
+
+    return ++last;
 }
 
 /*
@@ -607,17 +641,31 @@ int main(int argc, char** argv) {
 
     bool update = true;
     bool showhidden = false;
+    bool errorshown = false;
     size_t selection = 0,
            pos = 0,
+           lastsel = 0,
+           lastpos = 0,
            dcount = 0,
            marks = 0;
     size_t newdcount = 0;
 
-    int k, pk;
+    int k, pk, status;
+    const char *eprefix, *emsg;
     while (1) {
         if (update) {
             update = false;
-            newdcount = listdir(wd, &list, &listsize, showhidden);
+            status = listdir(wd, &list, &listsize, &newdcount, showhidden);
+            if (0 != status) {
+                parentdir(wd);
+                errorshown = true;
+                eprefix = fname(wd);
+                emsg = strerror(errno);
+                selection = lastsel;
+                pos = lastpos;
+                redraw = true;
+                continue;
+            }
             if (!newdcount) {
                 pos = 0;
                 selection = 0;
@@ -649,6 +697,9 @@ int main(int argc, char** argv) {
                 exit(EXIT_FAILURE);
             }
             drawscreen(wd, list, dcount, selection, pos, marks);
+            if (errorshown) {
+                drawstatuslineerror(eprefix, emsg, pos);
+            }
             printf("\033[%zu;1H", pos+2);
             fflush(stdout);
         }
@@ -738,12 +789,13 @@ int main(int argc, char** argv) {
             case '\n':
 #endif
             case 'l':
-                if (list[selection].type == ELEM_DIR
-                    || list[selection].type == ELEM_DIRLINK) {
+                if (E_DIR(list[selection].type)) {
                     if (wd[1] != '\0') {
                         strcat(wd, "/");
                     }
                     strncat(wd, list[selection].name, PATH_MAX - strlen(wd) - 2);
+                    lastsel = selection;
+                    lastpos = pos;
                     selection = 0;
                     pos = 0;
                     update = true;
@@ -757,12 +809,13 @@ int main(int argc, char** argv) {
 #endif
 #ifdef OPENER
             case 'o':
-                if (list[selection].type == ELEM_DIR
-                    || list[selection].type == ELEM_DIRLINK) {
+                if (E_DIR(list[selection].type)) {
                     if (wd[1] != '\0') {
                         strcat(wd, "/");
                     }
                     strncat(wd, list[selection].name, PATH_MAX - strlen(wd) - 2);
+                    lastsel = selection;
+                    lastpos = pos;
                     selection = 0;
                     pos = 0;
                     update = true;
