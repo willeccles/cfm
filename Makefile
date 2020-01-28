@@ -17,7 +17,7 @@ $(TARGET): $(CONF) $(SRC)
 $(CONF):
 	@cp -nv $(DEFCONF) $(CONF)
 
-install:
+install: $(TARGET)
 	install -m755 $(TARGET) $(DESTDIR)$(PREFIX)/bin/$(TARGET)
 	install -m644 $(MANPAGE) $(DESTDIR)$(PREFIX)/share/man/man1/$(MANPAGE)
 
