@@ -77,7 +77,6 @@ static const char* elemtypestrings[] = {
 struct listelem {
     enum elemtype type;
     char name[NAME_MAX];
-    bool selected;
     bool marked;
 };
 
@@ -281,7 +280,6 @@ static size_t listdir(const char* path, struct listelem** list, size_t* listsize
 
             strncpy((*list)[count].name, dir->d_name, NAME_MAX);
 
-            (*list)[count].selected = false;
             (*list)[count].marked = false;
 
             if (0 != fstatat(dfd, dir->d_name, &st, AT_SYMLINK_NOFOLLOW)) {
@@ -351,7 +349,7 @@ static int getkey() {
 /*
  * Draws one element to the screen.
  */
-static void drawentry(struct listelem* e) {
+static void drawentry(struct listelem* e, bool selected) {
     printf("\033[2K"); // clear line
     
     if (e->marked) {
@@ -378,21 +376,21 @@ static void drawentry(struct listelem* e) {
     }
 
 #if defined INVERT_SELECTION && INVERT_SELECTION
-    if (e->selected) {
+    if (selected) {
         printf("\033[7m");
     }
 #endif
     
 #if defined INDENT_SELECTION && INDENT_SELECTION
-    if (e->selected) {
+    if (selected) {
         printf("%s", POINTER);
     }
 #else
-    printf("%-*s", pointerwidth, e->selected ? POINTER : "");
+    printf("%-*s", pointerwidth, selected ? POINTER : "");
 #endif
 
 #if defined INVERT_SELECTION && INVERT_SELECTION
-    if (e->selected) {
+    if (selected) {
         printf(" %s%-*s", e->name, cols, E_DIR(e->type) ? "/" : "");
     } else {
         printf(" %s", e->name);
@@ -407,7 +405,7 @@ static void drawentry(struct listelem* e) {
     }
 #endif
 
-    if (e->marked && !e->selected) {
+    if (e->marked && !selected) {
         printf("\r%c", MARK_SYMBOL);
     }
 
@@ -456,7 +454,7 @@ static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t 
 
     for (size_t i = s - o; i < n && (int)(i - (s - o)) < rows - 2; i++) {
         printf("\r\n");
-        drawentry(&(l[i]));
+        drawentry(&(l[i]), (bool)(i == s));
     }
 
     drawstatusline(&(l[s]), n, s, m);
@@ -575,7 +573,6 @@ int main(int argc, char** argv) {
     while (1) {
         if (update) {
             update = false;
-            list[selection].selected = false;
             newdcount = listdir(wd, &list, &listsize, showhidden);
             if (!newdcount) {
                 pos = 0;
@@ -597,7 +594,6 @@ int main(int argc, char** argv) {
                         }
                     }
                 }
-                list[selection].selected = true;
             }
             dcount = newdcount;
             redraw = true;
@@ -628,7 +624,6 @@ int main(int argc, char** argv) {
                 break;
             case '.':
                 showhidden = !showhidden;
-                list[selection].selected = false;
                 selection = 0;
                 pos = 0;
                 update = true;
@@ -653,12 +648,10 @@ int main(int argc, char** argv) {
         switch (k) {
             case 'j':
                 if (selection < dcount - 1) {
-                    list[selection].selected = false;
-                    drawentry(&(list[selection]));
+                    drawentry(&(list[selection]), false);
                     selection++;
-                    printf("\r\n");
-                    list[selection].selected = true;
-                    drawentry(&(list[selection]));
+                    printf("\n");
+                    drawentry(&(list[selection]), true);
                     drawstatusline(&(list[selection]), dcount, selection, marks);
                     if (pos < rows - 3) {
                         pos++;
@@ -667,17 +660,15 @@ int main(int argc, char** argv) {
                 break;
             case 'k':
                 if (selection > 0) {
-                    list[selection].selected = false;
-                    drawentry(&(list[selection]));
+                    drawentry(&(list[selection]), false);
                     selection--;
-                    list[selection].selected = true;
                     if (pos > 0) {
                         pos--;
                         printf("\r\033[A");
                     } else {
                         printf("\r\033[L");
                     }
-                    drawentry(&(list[selection]));
+                    drawentry(&(list[selection]), true);
                     drawstatusline(&(list[selection]), dcount, selection, marks);
                 }
                 break;
@@ -685,17 +676,13 @@ int main(int argc, char** argv) {
                 if (pk != 'g') {
                     break;
                 }
-                list[selection].selected = false;
                 pos = 0;
                 selection = 0;
-                list[selection].selected = true;
                 redraw = true;
                 pk = 0;
                 break;
             case 'G':
-                list[selection].selected = false;
                 selection = dcount - 1;
-                list[selection].selected = true;
                 if (dcount > rows - 2) {
                     pos = rows - 3;
                 } else {
@@ -785,7 +772,7 @@ int main(int argc, char** argv) {
                     marks--;
                 }
                 drawstatusline(&(list[selection]), dcount, selection, marks);
-                drawentry(&(list[selection]));
+                drawentry(&(list[selection]), true);
                 break;
         }
 
