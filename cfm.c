@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 // include user config
 #include "config.h"
@@ -51,6 +52,10 @@
 #else
 # undef ENTER_OPENS
 # undef ENTER_OPEN
+#endif
+
+#ifndef MARK_SYMBOL
+# define MARK_SYMBOL '+'
 #endif
 
 enum elemtype {
@@ -210,9 +215,11 @@ static void resetterm() {
     printf(
         "\033[?7h"    // enable line wrapping
         "\033[?25h"   // unhide cursor
-        "\033[;r"     // reset scroll region
+        "\033[r"     // reset scroll region
         "\033[?1049l" // restore main screen
     );
+
+    fflush(stdout);
 }
 
 /*
@@ -225,7 +232,6 @@ static void execcmd(const char* path, const char* cmd, const char* arg) {
     }
     
     resetterm();
-    fflush(stdout);
 
     if (pid == 0) {
         if (chdir(path) < 0) {
@@ -401,27 +407,34 @@ static void drawentry(struct listelem* e) {
     }
 #endif
 
+    if (e->marked && !e->selected) {
+        printf("\r%c", MARK_SYMBOL);
+    }
+
     printf("\033[m\r"); // cursor to column 1
 }
 
 /*
  * Draws the status line at the bottom of the screen.
  */
-static void drawstatusline(struct listelem* l, size_t n, size_t s) {
+static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m) {
     printf("\033[s" // save location of cursor
         "\033[%d;H" // go to the bottom row
         "\033[2K" // clear the row
         "\033[37;7;1m", // inverse + bold
         rows);
 
-    int p = 0;
+    int p1 = 0, p2 = 0;
     printf(" %zu/%zu" // position
         "%n", // chars printed
         n ? s+1 : n,
         n,
-        &p);
+        &p1);
+    if (m) {
+        printf(" (%zu marked)%n", m, &p2);
+    }
     // print the type of the file
-    printf("%*s ", cols-p-1, elemtypestrings[l->type]);
+    printf("%*s ", cols-p1-p2-1, elemtypestrings[l->type]);
     printf("\033[u\033[m"); // move cursor back and reset formatting
 }
 
@@ -429,7 +442,7 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s) {
  * Draws the whole screen (redraw).
  * Use sparingly.
  */
-static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o) {
+static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o, size_t m) {
     // go to the top and print the info bar
     int p;
     printf("\033[2J" // clear
@@ -446,7 +459,7 @@ static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t 
         drawentry(&(l[i]));
     }
 
-    drawstatusline(&(l[s]), n, s);
+    drawstatusline(&(l[s]), n, s, m);
 }
 
 /*
@@ -595,7 +608,7 @@ int main(int argc, char** argv) {
             if (termsize()) {
                 exit(EXIT_FAILURE);
             }
-            drawscreen(wd, list, dcount, selection, pos);
+            drawscreen(wd, list, dcount, selection, pos, marks);
             printf("\033[%zu;1H", pos+2);
             fflush(stdout);
         }
@@ -633,6 +646,7 @@ int main(int argc, char** argv) {
 
         if (!dcount) {
             pk = k;
+            fflush(stdout);
             continue;
         }
 
@@ -645,11 +659,10 @@ int main(int argc, char** argv) {
                     printf("\r\n");
                     list[selection].selected = true;
                     drawentry(&(list[selection]));
-                    drawstatusline(&(list[selection]), dcount, selection);
+                    drawstatusline(&(list[selection]), dcount, selection, marks);
                     if (pos < rows - 3) {
                         pos++;
                     }
-                    fflush(stdout);
                 }
                 break;
             case 'k':
@@ -665,8 +678,7 @@ int main(int argc, char** argv) {
                         printf("\r\033[L");
                     }
                     drawentry(&(list[selection]));
-                    drawstatusline(&(list[selection]), dcount, selection);
-                    fflush(stdout);
+                    drawstatusline(&(list[selection]), dcount, selection, marks);
                 }
                 break;
             case 'g':
@@ -744,6 +756,21 @@ int main(int argc, char** argv) {
                 }
                 pk = 0;
                 break;
+            case 'D':
+                if (!marks) {
+                    break;
+                }
+                {
+                    char tmpbuf[PATH_MAX];
+                    for (int i = 0; i < dcount; i++) {
+                        if (list[i].marked) {
+                            snprintf(tmpbuf, PATH_MAX, "%s/%s", wd, list[i].name);
+                            remove(tmpbuf);
+                        }
+                    }
+                    update = true;
+                }
+                break;
             case 'e':
                 if (editor != NULL) {
                     execcmd(wd, editor, list[selection].name);
@@ -757,12 +784,13 @@ int main(int argc, char** argv) {
                 } else {
                     marks--;
                 }
+                drawstatusline(&(list[selection]), dcount, selection, marks);
                 drawentry(&(list[selection]));
-                fflush(stdout);
                 break;
         }
 
         pk = k;
+        fflush(stdout);
     }
 
     exit(EXIT_SUCCESS);

@@ -69,4 +69,13 @@
  */
 //#define INDENT_SELECTION 0
 
+/* MARK_SYMBOL:
+ * If not set, marked items will be prefixed with a '+' symbol.
+ * Else, can be a single character which will be placed at the
+ * start of the line for any non-selected, marked item.
+ *
+ * Value: char ('c')
+ */
+//#define MARK_SYMBOL '+'
+
 #endif
