@@ -192,7 +192,7 @@ static int setupterm() {
     printf(
         "\033[?1049h" // use alternative screen buffer
         "\033[?7l"    // disable line wrapping
-        //"\033[?25l"   // hide cursor
+        "\033[?25l"   // hide cursor
         "\033[2J"     // clear screen
         "\033[2;%dr", // limit scrolling to our rows
         rows-1);
