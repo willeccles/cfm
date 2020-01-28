@@ -33,7 +33,6 @@ cfm to use emacs, you could use `export CFM_EDITOR='emacs'`.
 
 ## Usage
 
-This is a non-exhaustive overview. RTFM for a more comprehensive list of keys.
 The functions of some keys may be dependent on values set in `config.h`.
 
 | Key(s) | Function |
@@ -46,5 +45,12 @@ The functions of some keys may be dependent on values set in `config.h`.
 | dd | Delete currently selected file or directory (there is no confirmation, be careful) |
 | gg | Move to top |
 | G | Move to bottom |
+| m | Mark for deletion |
+| D | Delete marked files (does not touch unmarked files) |
+| e | Open file or directory in `EDITOR` |
+| o | Open file or directory in `OPENER` |
+| r | Reload directory |
+| . | Toggle visibility of hidden files (dotfiles) |
+| RET | Works like `o` if `ENTER_OPENS` was enabled at compile-time, else works like `l` |
 
 *Note: the arrow keys work the same as HJKL.*
