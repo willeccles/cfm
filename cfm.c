@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+#include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -112,6 +113,38 @@ static atomic_bool redraw = false;
 static int rows, cols;
 static int pointerwidth = 2;
 
+static int strnatcmp(const char *s1, const char *s2) {
+    for (;;) {
+        if (*s2 == '\0') {
+            return *s1 != '\0';
+        }
+
+        if (*s1 == '\0') {
+            return 1;
+        }
+
+        if (!(isdigit(*s1) && isdigit(*s2))) {
+            if (*s1 != *s2) {
+                return (int)*s1 - (int)*s2;
+            }
+            ++s1;
+            ++s2;
+        } else {
+            char *lim1;
+            char *lim2;
+            unsigned long n1 = strtoul(s1, &lim1, 10);
+            unsigned long n2 = strtoul(s2, &lim2, 10);
+            if (n1 > n2) {
+                return 1;
+            } else if (n1 < n2) {
+                return -1;
+            }
+            s1 = lim1;
+            s2 = lim2;
+        }
+    }
+}
+
 /*
  * Comparison function for list elements for qsort.
  */
@@ -129,7 +162,7 @@ static int elemcmp(const void* a, const void* b) {
         return 1;
     }
 
-    return strcmp(x->name, y->name);
+    return strnatcmp(x->name, y->name);
 }
 
 /*
