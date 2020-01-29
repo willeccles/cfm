@@ -807,7 +807,6 @@ int main(int argc, char** argv) {
 #ifdef ENTER_OPEN
             case '\n':
 #endif
-#ifdef OPENER
             case 'o':
                 if (E_DIR(list[selection].type)) {
                     if (wd[1] != '\0') {
@@ -827,7 +826,6 @@ int main(int argc, char** argv) {
                     }
                 }
                 break;
-#endif
             case 'd':
                 if (pk != 'd') {
                     break;
