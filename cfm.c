@@ -595,21 +595,6 @@ static int parentdir(char* path) {
 }
 
 /*
- * Returns a pointer tothe last element of the given path,
- * i.e. in /a/b/c it will return c. This is not a copied string,
- * but rather a pointer to the location in 'path'.
- * Will return 'path' if the path is "/"
- */
-static const char* fname(const char* path) {
-    char* last = strrchr(path, '/');
-    if (last == path && path[1] == '\0') {
-        return path;
-    }
-
-    return ++last;
-}
-
-/*
  * Signal handler for SIGINT/SIGTERM.
  */
 static void sigdie(int UNUSED(sig)) {
@@ -743,7 +728,7 @@ int main(int argc, char** argv) {
             if (0 != status) {
                 parentdir(view->wd);
                 view->errorshown = true;
-                view->eprefix = "error";
+                view->eprefix = "Error";
                 view->emsg = strerror(errno);
                 view->selection = view->lastsel;
                 view->pos = view->lastpos;
