@@ -19,8 +19,10 @@ $(CONF):
 	@cp -nv $(DEFCONF) $(CONF)
 
 install: $(TARGET)
-	install -Dm755 $(TARGET) $(DESTDIR)$(PREFIX)/bin/$(TARGET)
-	install -Dm644 $(MANPAGE) $(DESTDIR)$(PREFIX)/share/man/man1/$(MANPAGE)
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	mkdir -p $(DESTDIR)$(PREFIX)/share/man/man1
+	install -m755 $(TARGET) $(DESTDIR)$(PREFIX)/bin/$(TARGET)
+	install -m644 $(MANPAGE) $(DESTDIR)$(PREFIX)/share/man/man1/$(MANPAGE)
 
 uninstall:
 	$(RM) $(DESTDIR)$(PREFIX)/bin/$(TARGET)
