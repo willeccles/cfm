@@ -8,6 +8,8 @@ the name and/or the dev, like with all software.
 
 *Note: the screenshot above has a non-default pointer.*
 
+[Demo](https://asciinema.org/a/296578)
+
 ## Configuration
 
 To configure cfm before building, you should copy `config.def.h` to `config.h`
