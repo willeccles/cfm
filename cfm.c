@@ -836,6 +836,9 @@ int main(int argc, char** argv) {
                     char tmpbuf[PATH_MAX];
                     snprintf(tmpbuf, PATH_MAX, "%s/%s", wd, list[selection].name);
                     remove(tmpbuf);
+                    if (list[selection].marked) {
+                        marks--;
+                    }
                     update = true;
                 }
                 pk = 0;
