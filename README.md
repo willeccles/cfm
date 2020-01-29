@@ -20,8 +20,10 @@ you.
 There are some options which cfm will attempt to use environment variables for.
 These are `$EDITOR`, `$SHELL`, and `$OPENER`. If you want to specify a specific
 option just for cfm, it will first try to find these variables prefixed with
-`$CFM_`. For example, if your `$EDITOR` is set to `vim` but you want to tell
-cfm to use emacs, you could use `export CFM_EDITOR='emacs'`.
+`$CFM_`. For example, if your `$EDITOR` is set to vim but you want to tell
+cfm to use emacs, you could use `export CFM_EDITOR='emacs'`. If you installed
+cfm via a package manager, or if you are using the default configuration, you
+can specify these environment variables to configure cfm without rebuilding.
 
 ## Building
 
@@ -29,7 +31,13 @@ cfm to use emacs, you could use `export CFM_EDITOR='emacs'`.
 
 ## Installing
 
-`sudo make install`
+If you are installing from source, use `sudo make install`.
+
+cfm is currently available as a package in the KISS community repository. If
+you are using the `kiss` package manager, update your community repo and use
+`kiss b cfm` and `kiss i cfm` to install cfm.
+
+The manual page will be installed regardless of how you install cfm.
 
 ## Usage
 
