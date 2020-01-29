@@ -124,8 +124,8 @@ static int strnatcmp(const char *s1, const char *s2) {
         }
 
         if (!(isdigit(*s1) && isdigit(*s2))) {
-            if (*s1 != *s2) {
-                return (int)*s1 - (int)*s2;
+            if (toupper(*s1) != toupper(*s2)) {
+                return toupper(*s1) - toupper(*s2);
             }
             ++s1;
             ++s2;
