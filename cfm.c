@@ -71,16 +71,16 @@
 # define MARK_SYMBOL '!'
 #endif
 
-#ifdef INSTANCE_COUNT
-# if INSTANCE_COUNT > 5
-#  undef INSTANCE_COUNT
-#  define INSTANCE_COUNT 5
-# elif INSTANCE_COUNT <= 0
-#  undef INSTANCE_COUNT
-#  define INSTANCE_COUNT 1
+#ifdef VIEW_COUNT
+# if VIEW_COUNT > 5
+#  undef VIEW_COUNT
+#  define VIEW_COUNT 5
+# elif VIEW_COUNT <= 0
+#  undef VIEW_COUNT
+#  define VIEW_COUNT 1
 # endif
 #else
-# define INSTANCE_COUNT 2
+# define VIEW_COUNT 2
 #endif
 
 enum elemtype {
@@ -515,15 +515,15 @@ static void drawstatuslineerror(const char* prefix, const char* error, size_t p)
  * Draws the whole screen (redraw).
  * Use sparingly.
  */
-static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o, size_t m, int i) {
+static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o, size_t m, int v) {
     // go to the top and print the info bar
     int p;
     printf("\033[2J" // clear
         "\033[H" // top left
         "\033[37;7;1m"); // style
-#if INSTANCE_COUNT > 1
-    printf(" %d: %s%n", // working directory + instance number
-        i+1, wd, &p);
+#if VIEW_COUNT > 1
+    printf(" %d: %s%n", // working directory + view
+        v+1, wd, &p);
 #else
     (void)i;
     printf(" %s%n", // print working directory
@@ -662,7 +662,7 @@ int main(int argc, char** argv) {
     size_t newdcount = 0;
     size_t dcount = 0;
 
-    struct instance {
+    struct view {
         char* wd;
         const char* eprefix;
         const char* emsg;
@@ -672,10 +672,10 @@ int main(int argc, char** argv) {
         size_t lastsel;
         size_t lastpos;
         size_t marks;
-    } instances[INSTANCE_COUNT];
+    } views[VIEW_COUNT];
 
-    for (int i = 0; i < INSTANCE_COUNT; i++) {
-        instances[i] = (struct instance){
+    for (int i = 0; i < VIEW_COUNT; i++) {
+        views[i] = (struct view){
             .wd = NULL,
             .errorshown = false,
             .selection = 0,
@@ -686,56 +686,54 @@ int main(int argc, char** argv) {
         };
     }
 
-    for (int i = 0; i < INSTANCE_COUNT; i++) {
-        instances[i].wd = malloc(PATH_MAX);
-        if (!instances[i].wd) {
+    for (int i = 0; i < VIEW_COUNT; i++) {
+        views[i].wd = malloc(PATH_MAX);
+        if (!views[i].wd) {
             perror("malloc");
             exit(EXIT_FAILURE);
         }
-        strcpy(instances[i].wd, wd);
+        strcpy(views[i].wd, wd);
     }
 
     free(wd);
 
-    // selected instance
-    int _inst = 0;
-    struct instance* inst = instances;
-
-#define setinst(n) _inst = (n); inst = &(instances[_inst]); update = true;
+    // selected view
+    int _view = 0;
+    struct view* view = views;
 
     int k, pk, status;
     char tmpbuf[PATH_MAX];
     while (1) {
         if (update) {
             update = false;
-            status = listdir(inst->wd, &list, &listsize, &newdcount, showhidden);
+            status = listdir(view->wd, &list, &listsize, &newdcount, showhidden);
             if (0 != status) {
-                parentdir(inst->wd);
-                inst->errorshown = true;
-                inst->eprefix = "error";
-                inst->emsg = strerror(errno);
-                inst->selection = inst->lastsel;
-                inst->pos = inst->lastpos;
+                parentdir(view->wd);
+                view->errorshown = true;
+                view->eprefix = "error";
+                view->emsg = strerror(errno);
+                view->selection = view->lastsel;
+                view->pos = view->lastpos;
                 redraw = true;
                 continue;
             }
             if (!newdcount) {
-                inst->pos = 0;
-                inst->selection = 0;
+                view->pos = 0;
+                view->selection = 0;
             } else {
                 // lock to bottom if deleted file at top
                 if (newdcount < dcount) {
-                    if (inst->pos == 0 && inst->selection > 0) {
-                        if (dcount - inst->selection == rows - 2) {
-                            inst->selection--;
+                    if (view->pos == 0 && view->selection > 0) {
+                        if (dcount - view->selection == rows - 2) {
+                            view->selection--;
                         }
                     }
                 }
-                while (inst->selection >= newdcount) {
-                    if (inst->selection) {
-                        inst->selection--;
-                        if (inst->pos) {
-                            inst->pos--;
+                while (view->selection >= newdcount) {
+                    if (view->selection) {
+                        view->selection--;
+                        if (view->pos) {
+                            view->pos--;
                         }
                     }
                 }
@@ -749,21 +747,21 @@ int main(int argc, char** argv) {
             if (termsize()) {
                 exit(EXIT_FAILURE);
             }
-            drawscreen(inst->wd, list, dcount, inst->selection, inst->pos, inst->marks, _inst);
-            if (inst->errorshown) {
-                drawstatuslineerror(inst->eprefix, inst->emsg, inst->pos);
+            drawscreen(view->wd, list, dcount, view->selection, view->pos, view->marks, _view);
+            if (view->errorshown) {
+                drawstatuslineerror(view->eprefix, view->emsg, view->pos);
             }
-            printf("\033[%zu;1H", inst->pos+2);
+            printf("\033[%zu;1H", view->pos+2);
             fflush(stdout);
         }
 
         k = getkey();
         switch(k) {
             case 'h':
-                if (parentdir(inst->wd)) {
-                    inst->errorshown = false;
-                    inst->pos = 0;
-                    inst->selection = 0;
+                if (parentdir(view->wd)) {
+                    view->errorshown = false;
+                    view->pos = 0;
+                    view->selection = 0;
                     update = true;
                 }
                 break;
@@ -773,8 +771,8 @@ int main(int argc, char** argv) {
                 break;
             case '.':
                 showhidden = !showhidden;
-                inst->selection = 0;
-                inst->pos = 0;
+                view->selection = 0;
+                view->pos = 0;
                 update = true;
                 break;
             case 'r':
@@ -782,7 +780,7 @@ int main(int argc, char** argv) {
                 break;
             case 's':
                 if (shell != NULL) {
-                    execcmd(inst->wd, shell, NULL);
+                    execcmd(view->wd, shell, NULL);
                     update = true;
                 }
                 break;
@@ -792,23 +790,23 @@ int main(int argc, char** argv) {
             case '3':
             case '4':
             case '5':
-                if (k - '1' < INSTANCE_COUNT) {
-                    _inst = k - '1';
-                    inst = &(instances[_inst]);
+                if (k - '1' < VIEW_COUNT) {
+                    _view = k - '1';
+                    view = &(views[_view]);
                     update = true;
                 }
                 break;
             case '`':
-                _inst--;
-                if (_inst < 0) {
-                    _inst = INSTANCE_COUNT - 1;
+                _view--;
+                if (_view < 0) {
+                    _view = VIEW_COUNT - 1;
                 }
-                inst = &(instances[_inst]);
+                view = &(views[_view]);
                 update = true;
                 break;
             case '\t':
-                _inst = (_inst + 1) % INSTANCE_COUNT;
-                inst = &(instances[_inst]);
+                _view = (_view + 1) % VIEW_COUNT;
+                view = &(views[_view]);
                 update = true;
                 break;
 #endif
@@ -822,136 +820,136 @@ int main(int argc, char** argv) {
 
         switch (k) {
             case 'j':
-                if (inst->selection < dcount - 1) {
-                    inst->errorshown = false;
-                    drawentry(&(list[inst->selection]), false);
-                    inst->selection++;
+                if (view->selection < dcount - 1) {
+                    view->errorshown = false;
+                    drawentry(&(list[view->selection]), false);
+                    view->selection++;
                     printf("\n");
-                    drawentry(&(list[inst->selection]), true);
-                    if (inst->pos < rows - 3) {
-                        inst->pos++;
+                    drawentry(&(list[view->selection]), true);
+                    if (view->pos < rows - 3) {
+                        view->pos++;
                     }
-                    drawstatusline(&(list[inst->selection]), dcount, inst->selection, inst->marks, inst->pos);
+                    drawstatusline(&(list[view->selection]), dcount, view->selection, view->marks, view->pos);
                 }
                 break;
             case 'k':
-                if (inst->selection > 0) {
-                    inst->errorshown = false;
-                    drawentry(&(list[inst->selection]), false);
-                    inst->selection--;
-                    if (inst->pos > 0) {
-                        inst->pos--;
+                if (view->selection > 0) {
+                    view->errorshown = false;
+                    drawentry(&(list[view->selection]), false);
+                    view->selection--;
+                    if (view->pos > 0) {
+                        view->pos--;
                         printf("\r\033[A");
                     } else {
                         printf("\r\033[L");
                     }
-                    drawentry(&(list[inst->selection]), true);
-                    drawstatusline(&(list[inst->selection]), dcount, inst->selection, inst->marks, inst->pos);
+                    drawentry(&(list[view->selection]), true);
+                    drawstatusline(&(list[view->selection]), dcount, view->selection, view->marks, view->pos);
                 }
                 break;
             case 'g':
                 if (pk != 'g') {
                     break;
                 }
-                inst->errorshown = false;
-                inst->pos = 0;
-                inst->selection = 0;
+                view->errorshown = false;
+                view->pos = 0;
+                view->selection = 0;
                 redraw = true;
                 pk = 0;
                 break;
             case 'G':
-                inst->selection = dcount - 1;
+                view->selection = dcount - 1;
                 if (dcount > rows - 2) {
-                    inst->pos = rows - 3;
+                    view->pos = rows - 3;
                 } else {
-                    inst->pos = inst->selection;
+                    view->pos = view->selection;
                 }
-                inst->errorshown = false;
+                view->errorshown = false;
                 redraw = true;
                 break;
 #ifndef ENTER_OPEN
             case '\n':
 #endif
             case 'l':
-                if (E_DIR(list[inst->selection].type)) {
-                    if (inst->wd[1] != '\0') {
-                        strcat(inst->wd, "/");
+                if (E_DIR(list[view->selection].type)) {
+                    if (view->wd[1] != '\0') {
+                        strcat(view->wd, "/");
                     }
-                    strncat(inst->wd, list[inst->selection].name, PATH_MAX - strlen(inst->wd) - 2);
-                    inst->lastsel = inst->selection;
-                    inst->lastpos = inst->pos;
-                    inst->selection = 0;
-                    inst->pos = 0;
+                    strncat(view->wd, list[view->selection].name, PATH_MAX - strlen(view->wd) - 2);
+                    view->lastsel = view->selection;
+                    view->lastpos = view->pos;
+                    view->selection = 0;
+                    view->pos = 0;
                     update = true;
                 } else {
-                    execcmd(inst->wd, editor, list[inst->selection].name);
+                    execcmd(view->wd, editor, list[view->selection].name);
                     update = true;
                 }
-                inst->errorshown = false;
+                view->errorshown = false;
                 break;
 #ifdef ENTER_OPEN
             case '\n':
 #endif
             case 'o':
-                if (E_DIR(list[inst->selection].type)) {
-                    if (inst->wd[1] != '\0') {
-                        strcat(inst->wd, "/");
+                if (E_DIR(list[view->selection].type)) {
+                    if (view->wd[1] != '\0') {
+                        strcat(view->wd, "/");
                     }
-                    strncat(inst->wd, list[inst->selection].name, PATH_MAX - strlen(inst->wd) - 2);
-                    inst->lastsel = inst->selection;
-                    inst->lastpos = inst->pos;
-                    inst->selection = 0;
-                    inst->pos = 0;
+                    strncat(view->wd, list[view->selection].name, PATH_MAX - strlen(view->wd) - 2);
+                    view->lastsel = view->selection;
+                    view->lastpos = view->pos;
+                    view->selection = 0;
+                    view->pos = 0;
                     update = true;
                     break;
                 } else if (opener != NULL) {
                     if (editor != NULL) {
-                        execcmd(inst->wd, opener, list[inst->selection].name);
+                        execcmd(view->wd, opener, list[view->selection].name);
                         update = true;
                     }
                 }
-                inst->errorshown = false;
+                view->errorshown = false;
                 break;
             case 'd':
                 if (pk != 'd') {
                     break;
                 }
-                snprintf(tmpbuf, PATH_MAX, "%s/%s", inst->wd, list[inst->selection].name);
+                snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, list[view->selection].name);
                 remove(tmpbuf);
-                if (list[inst->selection].marked) {
-                    inst->marks--;
+                if (list[view->selection].marked) {
+                    view->marks--;
                 }
                 update = true;
                 pk = 0;
                 break;
             case 'D':
-                if (!inst->marks) {
+                if (!view->marks) {
                     break;
                 }
                 for (int i = 0; i < dcount; i++) {
                     if (list[i].marked) {
-                        snprintf(tmpbuf, PATH_MAX, "%s/%s", inst->wd, list[i].name);
+                        snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, list[i].name);
                         remove(tmpbuf);
                     }
                 }
-                inst->marks = 0;
+                view->marks = 0;
                 update = true;
                 break;
             case 'e':
                 if (editor != NULL) {
-                    execcmd(inst->wd, editor, list[inst->selection].name);
+                    execcmd(view->wd, editor, list[view->selection].name);
                     update = true;
                 }
                 break;
             case 'm':
-                list[inst->selection].marked = !(list[inst->selection].marked);
-                if (list[inst->selection].marked) {
-                    inst->marks++;
+                list[view->selection].marked = !(list[view->selection].marked);
+                if (list[view->selection].marked) {
+                    view->marks++;
                 } else {
-                    inst->marks--;
+                    view->marks--;
                 }
-                drawstatusline(&(list[inst->selection]), dcount, inst->selection, inst->marks, inst->pos);
-                drawentry(&(list[inst->selection]), true);
+                drawstatusline(&(list[view->selection]), dcount, view->selection, view->marks, view->pos);
+                drawentry(&(list[view->selection]), true);
                 break;
         }
 

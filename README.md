@@ -1,13 +1,13 @@
 # Cactus File Manager
 
-Cactus File manager (cfm) is a TUI file manager with some features. It's quick
-and light. Whether or not you should use it depends on whether or not you like
-the name and/or the dev, like with all software.
+Cactus File manager (cfm) is a TUI file manager with some features here and
+there. It's quick and light. Whether or not you should use it depends on whether
+or not you like the name and/or the dev, like with all software.
 
 ![Example Configuration](screenshot.png)
 
 *Note: the screenshot above has a non-default pointer and no alternative
-instances enabled.*
+views enabled.*
 
 [Demo](https://asciinema.org/a/296578)
 
@@ -61,8 +61,8 @@ The functions of some keys may be dependent on values set in `config.h`.
 | r | Reload directory |
 | . | Toggle visibility of hidden files (dotfiles) |
 | RET | Works like `o` if `ENTER_OPENS` was enabled at compile-time, else works like `l` |
-| TAB | Switches to the next instance |
-| \` | Switches to the previous instance |
-| 1-5 | Switches to instance N, up to the number specified by `INSTANCE_COUNT` (default 2) |
+| TAB | Switches to the next view |
+| \` | Switches to the previous view |
+| 1-5 | Switches to view N, up to the number specified by `VIEW_COUNT` (default 2) |
 
 *Note: the arrow keys work the same as HJKL.*

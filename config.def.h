@@ -96,14 +96,14 @@
  */
 //#define MARK_SYMBOL '!'
 
-/* INSTANCE_COUNT:
- * If not set, cfm will allow for two instances by default.
- * Else, it will use this number of instances. The value
- * of INSTANCE_COUNT must be within the range 1-5.
+/* VIEW_COUNT:
+ * If not set, cfm will allow for two views by default.
+ * Else, it will use this number of views. The value
+ * of VIEW_COUNT must be within the range 1-5.
  *
  * Default: 2
  * Value: integer (1-5)
  */
-//#define INSTANCE_COUNT 2
+//#define VIEW_COUNT 2
 
 #endif
