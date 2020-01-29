@@ -708,6 +708,7 @@ int main(int argc, char** argv) {
         switch(k) {
             case 'h':
                 if (parentdir(wd)) {
+                    errorshown = false;
                     pos = 0;
                     selection = 0;
                     update = true;
@@ -743,6 +744,7 @@ int main(int argc, char** argv) {
         switch (k) {
             case 'j':
                 if (selection < dcount - 1) {
+                    errorshown = false;
                     drawentry(&(list[selection]), false);
                     selection++;
                     printf("\n");
@@ -755,6 +757,7 @@ int main(int argc, char** argv) {
                 break;
             case 'k':
                 if (selection > 0) {
+                    errorshown = false;
                     drawentry(&(list[selection]), false);
                     selection--;
                     if (pos > 0) {
@@ -771,6 +774,7 @@ int main(int argc, char** argv) {
                 if (pk != 'g') {
                     break;
                 }
+                errorshown = false;
                 pos = 0;
                 selection = 0;
                 redraw = true;
@@ -783,6 +787,7 @@ int main(int argc, char** argv) {
                 } else {
                     pos = selection;
                 }
+                errorshown = false;
                 redraw = true;
                 break;
 #ifndef ENTER_OPEN
@@ -803,6 +808,7 @@ int main(int argc, char** argv) {
                     execcmd(wd, editor, list[selection].name);
                     update = true;
                 }
+                errorshown = false;
                 break;
 #ifdef ENTER_OPEN
             case '\n':
@@ -825,6 +831,7 @@ int main(int argc, char** argv) {
                         update = true;
                     }
                 }
+                errorshown = false;
                 break;
             case 'd':
                 if (pk != 'd') {
