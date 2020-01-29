@@ -860,6 +860,7 @@ int main(int argc, char** argv) {
                             remove(tmpbuf);
                         }
                     }
+                    marks = 0;
                     update = true;
                 }
                 break;
