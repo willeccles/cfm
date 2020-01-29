@@ -6,7 +6,8 @@ the name and/or the dev, like with all software.
 
 ![Example Configuration](screenshot.png)
 
-*Note: the screenshot above has a non-default pointer.*
+*Note: the screenshot above has a non-default pointer and no alternative
+instances enabled.*
 
 [Demo](https://asciinema.org/a/296578)
 
@@ -60,5 +61,8 @@ The functions of some keys may be dependent on values set in `config.h`.
 | r | Reload directory |
 | . | Toggle visibility of hidden files (dotfiles) |
 | RET | Works like `o` if `ENTER_OPENS` was enabled at compile-time, else works like `l` |
+| TAB | Switches to the next instance |
+| \` | Switches to the previous instance |
+| 1-5 | Switches to instance N, up to the number specified by `INSTANCE_COUNT` (default 2) |
 
 *Note: the arrow keys work the same as HJKL.*

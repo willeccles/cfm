@@ -71,6 +71,18 @@
 # define MARK_SYMBOL '!'
 #endif
 
+#ifdef INSTANCE_COUNT
+# if INSTANCE_COUNT > 5
+#  undef INSTANCE_COUNT
+#  define INSTANCE_COUNT 5
+# elif INSTANCE_COUNT <= 0
+#  undef INSTANCE_COUNT
+#  define INSTANCE_COUNT 1
+# endif
+#else
+# define INSTANCE_COUNT 2
+#endif
+
 enum elemtype {
     ELEM_DIR,
     ELEM_LINK,
@@ -503,14 +515,20 @@ static void drawstatuslineerror(const char* prefix, const char* error, size_t p)
  * Draws the whole screen (redraw).
  * Use sparingly.
  */
-static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o, size_t m) {
+static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o, size_t m, int i) {
     // go to the top and print the info bar
     int p;
     printf("\033[2J" // clear
         "\033[H" // top left
         "\033[37;7;1m"); // style
+#if INSTANCE_COUNT > 1
+    printf(" %d: %s%n", // working directory + instance number
+        i+1, wd, &p);
+#else
+    (void)i;
     printf(" %s%n", // print working directory
         wd, &p);
+#endif
     printf("%-*s", (int)(cols - p), (wd[1] == '\0') ? "" : "/");
 
     printf("\033[m"); // reset formatting
@@ -641,48 +659,83 @@ int main(int argc, char** argv) {
 
     bool update = true;
     bool showhidden = false;
-    bool errorshown = false;
-    size_t selection = 0,
-           pos = 0,
-           lastsel = 0,
-           lastpos = 0,
-           dcount = 0,
-           marks = 0;
     size_t newdcount = 0;
+    size_t dcount = 0;
+
+    struct instance {
+        char* wd;
+        const char* eprefix;
+        const char* emsg;
+        bool errorshown;
+        size_t selection;
+        size_t pos;
+        size_t lastsel;
+        size_t lastpos;
+        size_t marks;
+    } instances[INSTANCE_COUNT];
+
+    for (int i = 0; i < INSTANCE_COUNT; i++) {
+        instances[i] = (struct instance){
+            .wd = NULL,
+            .errorshown = false,
+            .selection = 0,
+            .pos = 0,
+            .lastsel = 0,
+            .lastpos = 0,
+            .marks = 0,
+        };
+    }
+
+    for (int i = 0; i < INSTANCE_COUNT; i++) {
+        instances[i].wd = malloc(PATH_MAX);
+        if (!instances[i].wd) {
+            perror("malloc");
+            exit(EXIT_FAILURE);
+        }
+        strcpy(instances[i].wd, wd);
+    }
+
+    free(wd);
+
+    // selected instance
+    int _inst = 0;
+    struct instance* inst = instances;
+
+#define setinst(n) _inst = (n); inst = &(instances[_inst]); update = true;
 
     int k, pk, status;
-    const char *eprefix, *emsg;
+    char tmpbuf[PATH_MAX];
     while (1) {
         if (update) {
             update = false;
-            status = listdir(wd, &list, &listsize, &newdcount, showhidden);
+            status = listdir(inst->wd, &list, &listsize, &newdcount, showhidden);
             if (0 != status) {
-                parentdir(wd);
-                errorshown = true;
-                eprefix = "error";
-                emsg = strerror(errno);
-                selection = lastsel;
-                pos = lastpos;
+                parentdir(inst->wd);
+                inst->errorshown = true;
+                inst->eprefix = "error";
+                inst->emsg = strerror(errno);
+                inst->selection = inst->lastsel;
+                inst->pos = inst->lastpos;
                 redraw = true;
                 continue;
             }
             if (!newdcount) {
-                pos = 0;
-                selection = 0;
+                inst->pos = 0;
+                inst->selection = 0;
             } else {
                 // lock to bottom if deleted file at top
                 if (newdcount < dcount) {
-                    if (pos == 0 && selection > 0) {
-                        if (dcount - selection == rows - 2) {
-                            selection--;
+                    if (inst->pos == 0 && inst->selection > 0) {
+                        if (dcount - inst->selection == rows - 2) {
+                            inst->selection--;
                         }
                     }
                 }
-                while (selection >= newdcount) {
-                    if (selection) {
-                        selection--;
-                        if (pos) {
-                            pos--;
+                while (inst->selection >= newdcount) {
+                    if (inst->selection) {
+                        inst->selection--;
+                        if (inst->pos) {
+                            inst->pos--;
                         }
                     }
                 }
@@ -696,21 +749,21 @@ int main(int argc, char** argv) {
             if (termsize()) {
                 exit(EXIT_FAILURE);
             }
-            drawscreen(wd, list, dcount, selection, pos, marks);
-            if (errorshown) {
-                drawstatuslineerror(eprefix, emsg, pos);
+            drawscreen(inst->wd, list, dcount, inst->selection, inst->pos, inst->marks, _inst);
+            if (inst->errorshown) {
+                drawstatuslineerror(inst->eprefix, inst->emsg, inst->pos);
             }
-            printf("\033[%zu;1H", pos+2);
+            printf("\033[%zu;1H", inst->pos+2);
             fflush(stdout);
         }
 
         k = getkey();
         switch(k) {
             case 'h':
-                if (parentdir(wd)) {
-                    errorshown = false;
-                    pos = 0;
-                    selection = 0;
+                if (parentdir(inst->wd)) {
+                    inst->errorshown = false;
+                    inst->pos = 0;
+                    inst->selection = 0;
                     update = true;
                 }
                 break;
@@ -720,8 +773,8 @@ int main(int argc, char** argv) {
                 break;
             case '.':
                 showhidden = !showhidden;
-                selection = 0;
-                pos = 0;
+                inst->selection = 0;
+                inst->pos = 0;
                 update = true;
                 break;
             case 'r':
@@ -729,10 +782,36 @@ int main(int argc, char** argv) {
                 break;
             case 's':
                 if (shell != NULL) {
-                    execcmd(wd, shell, NULL);
+                    execcmd(inst->wd, shell, NULL);
                     update = true;
                 }
                 break;
+#if INSTANCE_COUNT > 1
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+                if (k - '1' < INSTANCE_COUNT) {
+                    _inst = k - '1';
+                    inst = &(instances[_inst]);
+                    update = true;
+                }
+                break;
+            case '`':
+                _inst--;
+                if (_inst < 0) {
+                    _inst = INSTANCE_COUNT - 1;
+                }
+                inst = &(instances[_inst]);
+                update = true;
+                break;
+            case '\t':
+                _inst = (_inst + 1) % INSTANCE_COUNT;
+                inst = &(instances[_inst]);
+                update = true;
+                break;
+#endif
         }
 
         if (!dcount) {
@@ -743,142 +822,136 @@ int main(int argc, char** argv) {
 
         switch (k) {
             case 'j':
-                if (selection < dcount - 1) {
-                    errorshown = false;
-                    drawentry(&(list[selection]), false);
-                    selection++;
+                if (inst->selection < dcount - 1) {
+                    inst->errorshown = false;
+                    drawentry(&(list[inst->selection]), false);
+                    inst->selection++;
                     printf("\n");
-                    drawentry(&(list[selection]), true);
-                    if (pos < rows - 3) {
-                        pos++;
+                    drawentry(&(list[inst->selection]), true);
+                    if (inst->pos < rows - 3) {
+                        inst->pos++;
                     }
-                    drawstatusline(&(list[selection]), dcount, selection, marks, pos);
+                    drawstatusline(&(list[inst->selection]), dcount, inst->selection, inst->marks, inst->pos);
                 }
                 break;
             case 'k':
-                if (selection > 0) {
-                    errorshown = false;
-                    drawentry(&(list[selection]), false);
-                    selection--;
-                    if (pos > 0) {
-                        pos--;
+                if (inst->selection > 0) {
+                    inst->errorshown = false;
+                    drawentry(&(list[inst->selection]), false);
+                    inst->selection--;
+                    if (inst->pos > 0) {
+                        inst->pos--;
                         printf("\r\033[A");
                     } else {
                         printf("\r\033[L");
                     }
-                    drawentry(&(list[selection]), true);
-                    drawstatusline(&(list[selection]), dcount, selection, marks, pos);
+                    drawentry(&(list[inst->selection]), true);
+                    drawstatusline(&(list[inst->selection]), dcount, inst->selection, inst->marks, inst->pos);
                 }
                 break;
             case 'g':
                 if (pk != 'g') {
                     break;
                 }
-                errorshown = false;
-                pos = 0;
-                selection = 0;
+                inst->errorshown = false;
+                inst->pos = 0;
+                inst->selection = 0;
                 redraw = true;
                 pk = 0;
                 break;
             case 'G':
-                selection = dcount - 1;
+                inst->selection = dcount - 1;
                 if (dcount > rows - 2) {
-                    pos = rows - 3;
+                    inst->pos = rows - 3;
                 } else {
-                    pos = selection;
+                    inst->pos = inst->selection;
                 }
-                errorshown = false;
+                inst->errorshown = false;
                 redraw = true;
                 break;
 #ifndef ENTER_OPEN
             case '\n':
 #endif
             case 'l':
-                if (E_DIR(list[selection].type)) {
-                    if (wd[1] != '\0') {
-                        strcat(wd, "/");
+                if (E_DIR(list[inst->selection].type)) {
+                    if (inst->wd[1] != '\0') {
+                        strcat(inst->wd, "/");
                     }
-                    strncat(wd, list[selection].name, PATH_MAX - strlen(wd) - 2);
-                    lastsel = selection;
-                    lastpos = pos;
-                    selection = 0;
-                    pos = 0;
+                    strncat(inst->wd, list[inst->selection].name, PATH_MAX - strlen(inst->wd) - 2);
+                    inst->lastsel = inst->selection;
+                    inst->lastpos = inst->pos;
+                    inst->selection = 0;
+                    inst->pos = 0;
                     update = true;
                 } else {
-                    execcmd(wd, editor, list[selection].name);
+                    execcmd(inst->wd, editor, list[inst->selection].name);
                     update = true;
                 }
-                errorshown = false;
+                inst->errorshown = false;
                 break;
 #ifdef ENTER_OPEN
             case '\n':
 #endif
             case 'o':
-                if (E_DIR(list[selection].type)) {
-                    if (wd[1] != '\0') {
-                        strcat(wd, "/");
+                if (E_DIR(list[inst->selection].type)) {
+                    if (inst->wd[1] != '\0') {
+                        strcat(inst->wd, "/");
                     }
-                    strncat(wd, list[selection].name, PATH_MAX - strlen(wd) - 2);
-                    lastsel = selection;
-                    lastpos = pos;
-                    selection = 0;
-                    pos = 0;
+                    strncat(inst->wd, list[inst->selection].name, PATH_MAX - strlen(inst->wd) - 2);
+                    inst->lastsel = inst->selection;
+                    inst->lastpos = inst->pos;
+                    inst->selection = 0;
+                    inst->pos = 0;
                     update = true;
                     break;
                 } else if (opener != NULL) {
                     if (editor != NULL) {
-                        execcmd(wd, opener, list[selection].name);
+                        execcmd(inst->wd, opener, list[inst->selection].name);
                         update = true;
                     }
                 }
-                errorshown = false;
+                inst->errorshown = false;
                 break;
             case 'd':
                 if (pk != 'd') {
                     break;
                 }
-                {
-                    char tmpbuf[PATH_MAX];
-                    snprintf(tmpbuf, PATH_MAX, "%s/%s", wd, list[selection].name);
-                    remove(tmpbuf);
-                    if (list[selection].marked) {
-                        marks--;
-                    }
-                    update = true;
+                snprintf(tmpbuf, PATH_MAX, "%s/%s", inst->wd, list[inst->selection].name);
+                remove(tmpbuf);
+                if (list[inst->selection].marked) {
+                    inst->marks--;
                 }
+                update = true;
                 pk = 0;
                 break;
             case 'D':
-                if (!marks) {
+                if (!inst->marks) {
                     break;
                 }
-                {
-                    char tmpbuf[PATH_MAX];
-                    for (int i = 0; i < dcount; i++) {
-                        if (list[i].marked) {
-                            snprintf(tmpbuf, PATH_MAX, "%s/%s", wd, list[i].name);
-                            remove(tmpbuf);
-                        }
+                for (int i = 0; i < dcount; i++) {
+                    if (list[i].marked) {
+                        snprintf(tmpbuf, PATH_MAX, "%s/%s", inst->wd, list[i].name);
+                        remove(tmpbuf);
                     }
-                    marks = 0;
-                    update = true;
                 }
+                inst->marks = 0;
+                update = true;
                 break;
             case 'e':
                 if (editor != NULL) {
-                    execcmd(wd, editor, list[selection].name);
+                    execcmd(inst->wd, editor, list[inst->selection].name);
                     update = true;
                 }
                 break;
             case 'm':
-                list[selection].marked = !(list[selection].marked);
-                if (list[selection].marked) {
-                    marks++;
+                list[inst->selection].marked = !(list[inst->selection].marked);
+                if (list[inst->selection].marked) {
+                    inst->marks++;
                 } else {
-                    marks--;
+                    inst->marks--;
                 }
-                drawstatusline(&(list[selection]), dcount, selection, marks, pos);
-                drawentry(&(list[selection]), true);
+                drawstatusline(&(list[inst->selection]), dcount, inst->selection, inst->marks, inst->pos);
+                drawentry(&(list[inst->selection]), true);
                 break;
         }
 
