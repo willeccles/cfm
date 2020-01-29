@@ -659,7 +659,7 @@ int main(int argc, char** argv) {
             if (0 != status) {
                 parentdir(wd);
                 errorshown = true;
-                eprefix = fname(wd);
+                eprefix = "error";
                 emsg = strerror(errno);
                 selection = lastsel;
                 pos = lastpos;
