@@ -662,7 +662,6 @@ static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t 
     printf(" %d: %s%n", // working directory + view
         v+1, wd, &p);
 #else
-    (void)i;
     printf(" %s%n", // print working directory
         wd, &p);
 #endif
