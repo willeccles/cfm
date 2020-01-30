@@ -9,6 +9,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <ftw.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdatomic.h>
@@ -108,10 +109,60 @@ struct listelem {
 
 #define E_DIR(t) ((t)==ELEM_DIR || (t)==ELEM_DIRLINK)
 
+static int del_id = 0;
+
+struct deletedfile {
+    char* original;
+    int id;
+    bool mass;
+    struct deletedfile* prev;
+};
+
 static struct termios old_term;
 static atomic_bool redraw = false;
 static int rows, cols;
 static int pointerwidth = 2;
+static char editor[PATH_MAX];
+static char opener[PATH_MAX];
+static char shell[PATH_MAX];
+static char trashdir[PATH_MAX];
+
+static int rmFiles(const char *pathname, const struct stat *sbuf, int type, struct FTW *ftwb) {
+    return remove(pathname) ? -1 : 0;
+}
+
+/*
+ * Deletes a directory, even if it contains files.
+ */
+static int deldir(const char* dir) {
+    return nftw(dir, rmFiles, 10, FTW_DEPTH | FTW_MOUNT | FTW_PHYS);
+}
+
+static struct deletedfile* newdeleted(bool mass) {
+    struct deletedfile* d = malloc(sizeof(struct deletedfile));
+    if (!d) {
+        return NULL;
+    }
+
+    d->original = malloc(NAME_MAX);
+    if (!d->original) {
+        free(d);
+        return NULL;
+    }
+
+    d->id = del_id++;
+    d->mass = mass;
+    d->prev = NULL;
+
+    return d;
+}
+
+static struct deletedfile* freedeleted(struct deletedfile* f) {
+    struct deletedfile* d = f->prev;
+    free(f->original);
+    free(f);
+    return d;
+}
 
 static int strnatcmp(const char *s1, const char *s2) {
     for (;;) {
@@ -165,18 +216,42 @@ static int elemcmp(const void* a, const void* b) {
     return strnatcmp(x->name, y->name);
 }
 
+/* 
+ * Get the user's home dir.
+ */
+static char* gethome(char* out, size_t len) {
+    const char* home = getenv("HOME");
+    if (!home) {
+        return NULL;
+    } else {
+        strncpy(out, home, len);
+        return out;
+    }
+}
+
 /*
  * Get editor.
  */
-static const char* geteditor() {
+static void geteditor() {
 #ifdef EDITOR
-    return EDITOR;
+    if (NULL == realpath(EDITOR, editor)) {
+        editor[0] = '\0';
+    }
 #else
-    const char* e = getenv("CFM_EDITOR");
-    if (!e) {
-        return getenv("EDITOR");
+    const char* res = getenv("CFM_EDITOR");
+    if (!res) {
+        res = getenv("EDITOR");
+        if (!res) {
+            editor[0] = '\0';
+        } else {
+            if (!realpath(res, editor)) {
+                editor[0] = '\0';
+            }
+        }
     } else {
-        return e;
+        if (!realpath(res, editor)) {
+            editor[0] = '\0';
+        }
     }
 #endif /* EDITOR */
 }
@@ -184,15 +259,26 @@ static const char* geteditor() {
 /*
  * Get shell.
  */
-static const char* getshell() {
+static void getshell() {
 #ifdef SHELL
-    return SHELL;
+    if (NULL == realpath(SHELL, shell)) {
+        shell[0] = '\0';
+    }
 #else
     const char* res = getenv("CFM_SHELL");
     if (!res) {
-        return getenv("SHELL");
+        res = getenv("SHELL");
+        if (!res) {
+            shell[0] = '\0';
+        } else {
+            if (!realpath(res, shell)) {
+                shell[0] = '\0';
+            }
+        }
     } else {
-        return res;
+        if (!realpath(res, shell)) {
+            shell[0] = '\0';
+        }
     }
 #endif /* SHELL */
 }
@@ -200,17 +286,53 @@ static const char* getshell() {
 /*
  * Get the opener program.
  */
-static const char* getopener() {
+static void getopener() {
 #ifdef OPENER
-    return OPENER;
+    if (NULL == realpath(OPENER, opener)) {
+        shell[0] = '\0';
+    }
 #else
-    const char* o = getenv("CFM_OPENER");
-    if (!o) {
-        return getenv("OPENER");
+    const char* res = getenv("CFM_OPENER");
+    if (!res) {
+        res = getenv("OPENER");
+        if (!res) {
+            opener[0] = '\0';
+        } else {
+            if (!realpath(res, opener)) {
+                opener[0] = '\0';
+            }
+        }
     } else {
-        return o;
+        if (!realpath(res, opener)) {
+            opener[0] = '\0';
+        }
     }
 #endif
+}
+
+/*
+ * Get the trash directory.
+ */
+static void maketrashdir() {
+    if (gethome(trashdir, PATH_MAX - strlen("/.cfmtrash"))) {
+        strncat(trashdir, "/.cfmtrash", PATH_MAX - strlen(trashdir));
+        if (mkdir(trashdir, 0751)) {
+            if (errno == EEXIST) {
+                return;
+            }
+            trashdir[0] = '\0';
+        }
+    } else {
+        trashdir[0] = '\0';
+    }
+}
+
+static void emptytrash() {
+    if (trashdir[0]) {
+        if (0 != deldir(trashdir)) {
+            perror("unlink: ~/.cfmtrash");
+        }
+    }
 }
 
 /*
@@ -630,9 +752,10 @@ int main(int argc, char** argv) {
 
     pointerwidth = strlen(POINTER);
 
-    const char* editor = geteditor();
-    const char* shell = getshell();
-    const char* opener = getopener();
+    geteditor();
+    getshell();
+    getopener();
+    maketrashdir();
 
     if (termsize()) {
         exit(EXIT_FAILURE);
@@ -666,6 +789,9 @@ int main(int argc, char** argv) {
         exit(EXIT_FAILURE);
     }
 
+    if (trashdir[0]) {
+        atexit(emptytrash);
+    }
     atexit(resetterm);
 
     size_t listsize = LIST_ALLOC_SIZE;
@@ -679,6 +805,8 @@ int main(int argc, char** argv) {
     bool showhidden = false;
     size_t newdcount = 0;
     size_t dcount = 0;
+
+    struct deletedfile* delstack = NULL;
 
     struct view {
         char* wd;
@@ -718,6 +846,12 @@ int main(int argc, char** argv) {
     // selected view
     int _view = 0;
     struct view* view = views;
+
+    if (!trashdir[0]) {
+        view->errorshown = true;
+        view->eprefix = "Warning";
+        view->emsg = "Trash dir not available";
+    }
 
     int k, pk, status;
     char tmpbuf[PATH_MAX];
@@ -797,7 +931,7 @@ int main(int argc, char** argv) {
                 update = true;
                 break;
             case 's':
-                if (shell != NULL) {
+                if (shell[0]) {
                     execcmd(view->wd, shell, NULL);
                     update = true;
                 }
@@ -828,6 +962,21 @@ int main(int argc, char** argv) {
                 update = true;
                 break;
 #endif
+            case 'u':
+                if (trashdir[0] && delstack != NULL) {
+                    do {
+                        snprintf(tmpbuf, PATH_MAX, "%s/%d", trashdir, delstack->id);
+                        if (0 != rename(tmpbuf, delstack->original)) {
+                            view->eprefix = "Error undoing";
+                            view->emsg = strerror(errno);
+                            view->errorshown = true;
+                        } else {
+                            delstack = freedeleted(delstack);
+                        }
+                    } while (delstack && delstack->mass);
+                    update = 1;
+                }
+                break;
         }
 
         if (!dcount) {
@@ -900,8 +1049,10 @@ int main(int argc, char** argv) {
                     view->pos = 0;
                     update = true;
                 } else {
-                    execcmd(view->wd, editor, list[view->selection].name);
-                    update = true;
+                    if (editor[0]) {
+                        execcmd(view->wd, editor, list[view->selection].name);
+                        update = true;
+                    }
                 }
                 view->errorshown = false;
                 break;
@@ -920,8 +1071,8 @@ int main(int argc, char** argv) {
                     view->pos = 0;
                     update = true;
                     break;
-                } else if (opener != NULL) {
-                    if (editor != NULL) {
+                } else if (opener[0]) {
+                    if (opener[0]) {
                         execcmd(view->wd, opener, list[view->selection].name);
                         update = true;
                     }
@@ -932,10 +1083,47 @@ int main(int argc, char** argv) {
                 if (pk != 'd') {
                     break;
                 }
-                snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, list[view->selection].name);
-                remove(tmpbuf);
-                if (list[view->selection].marked) {
-                    view->marks--;
+                if (trashdir[0]) {
+                    if (NULL == delstack) {
+                        delstack = newdeleted(false);
+                    } else {
+                        struct deletedfile* d = newdeleted(false);
+                        d->prev = delstack;
+                        delstack = d;
+                    }
+
+                    snprintf(delstack->original, PATH_MAX, "%s/%s", view->wd, list[view->selection].name);
+                    
+                    snprintf(tmpbuf, PATH_MAX, "%s/%d", trashdir, delstack->id);
+                    if (0 != rename(delstack->original, tmpbuf)) {
+                        view->eprefix = "Error deleting";
+                        view->emsg = strerror(errno);
+                        view->errorshown = true;
+                        delstack = freedeleted(delstack);
+                    } else {
+                        if (list[view->selection].marked) {
+                            view->marks--;
+                        }
+                    }
+                } else {
+                    snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, list[view->selection].name);
+                    if (E_DIR(list[view->selection].type)) {
+                        if (0 != deldir(list[view->selection].name)) {
+                            view->eprefix = "Error deleting";
+                            view->emsg = strerror(errno);
+                            view->errorshown = true;
+                        }
+                    } else {
+                        if (0 != remove(tmpbuf)) {
+                            view->eprefix = "Error deleting";
+                            view->emsg = strerror(errno);
+                            view->errorshown = true;
+                        } else {
+                            if (list[view->selection].marked) {
+                                view->marks--;
+                            }
+                        }
+                    }
                 }
                 update = true;
                 pk = 0;
@@ -946,15 +1134,50 @@ int main(int argc, char** argv) {
                 }
                 for (int i = 0; i < dcount; i++) {
                     if (list[i].marked) {
-                        snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, list[i].name);
-                        remove(tmpbuf);
+                        if (trashdir[0]) {
+                            if (NULL == delstack) {
+                                delstack = newdeleted(true);
+                            } else {
+                                struct deletedfile* d = newdeleted(true);
+                                d->prev = delstack;
+                                delstack = d;
+                            }
+
+                            snprintf(delstack->original, PATH_MAX, "%s/%s", view->wd, list[i].name);
+
+                            snprintf(tmpbuf, PATH_MAX, "%s/%d", trashdir, delstack->id);
+                            if (0 != rename(delstack->original, tmpbuf)) {
+                                view->eprefix = "Error deleting";
+                                view->emsg = strerror(errno);
+                                view->errorshown = true;
+                                delstack = freedeleted(delstack);
+                            } else {
+                                view->marks--;
+                            }
+                        } else {
+                            snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, list[i].name);
+                            if (E_DIR(list[view->selection].type)) {
+                                if (0 != deldir(list[view->selection].name)) {
+                                    view->eprefix = "Error deleting";
+                                    view->emsg = strerror(errno);
+                                    view->errorshown = true;
+                                }
+                            } else {
+                                if (0 != remove(tmpbuf)) {
+                                    view->eprefix = "Error deleting";
+                                    view->emsg = strerror(errno);
+                                    view->errorshown = true;
+                                } else {
+                                    view->marks--;
+                                }
+                            }
+                        }
                     }
                 }
-                view->marks = 0;
                 update = true;
                 break;
             case 'e':
-                if (editor != NULL) {
+                if (editor[0]) {
                     execcmd(view->wd, editor, list[view->selection].name);
                     update = true;
                 }

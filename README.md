@@ -56,6 +56,7 @@ The functions of some keys may be dependent on values set in `config.h`.
 | G | Move to bottom |
 | m | Mark for deletion |
 | D | Delete marked files (does not touch unmarked files) |
+| u | Undo the last deletion operation (if cfm was unable to access/create its trash directory `~/.cfmtrash`, deletion is permanent and this will not work) |
 | e | Open file or directory in `EDITOR` |
 | o | Open file or directory in `OPENER` |
 | r | Reload directory |
