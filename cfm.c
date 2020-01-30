@@ -918,7 +918,7 @@ int main(int argc, char** argv) {
                     update = true;
                 }
                 break;
-#if INSTANCE_COUNT > 1
+#if VIEW_COUNT > 1
             case '1':
             case '2':
             case '3':
