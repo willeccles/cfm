@@ -912,7 +912,7 @@ int main(int argc, char** argv) {
             case 'r':
                 update = true;
                 break;
-            case 's':
+            case 'S':
                 if (shell[0]) {
                     execcmd(view->wd, shell, NULL);
                     update = true;

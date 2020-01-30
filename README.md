@@ -59,6 +59,7 @@ The functions of some keys may be dependent on values set in `config.h`.
 | u | Undo the last deletion operation (if cfm was unable to access/create its trash directory `~/.cfmtrash`, deletion is permanent and this will not work) |
 | e | Open file or directory in `EDITOR` |
 | o | Open file or directory in `OPENER` |
+| S | Spawns a `SHELL` in the current directory |
 | r | Reload directory |
 | . | Toggle visibility of hidden files (dotfiles) |
 | RET | Works like `o` if `ENTER_OPENS` was enabled at compile-time, else works like `l` |
