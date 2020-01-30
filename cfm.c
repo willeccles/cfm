@@ -234,9 +234,7 @@ static char* gethome(char* out, size_t len) {
  */
 static void geteditor() {
 #ifdef EDITOR
-    if (NULL == realpath(EDITOR, editor)) {
-        editor[0] = '\0';
-    }
+    strncpy(editor, EDITOR, PATH_MAX);
 #else
     const char* res = getenv("CFM_EDITOR");
     if (!res) {
@@ -244,14 +242,10 @@ static void geteditor() {
         if (!res) {
             editor[0] = '\0';
         } else {
-            if (!realpath(res, editor)) {
-                editor[0] = '\0';
-            }
+            strncpy(editor, res, PATH_MAX);
         }
     } else {
-        if (!realpath(res, editor)) {
-            editor[0] = '\0';
-        }
+        strncpy(editor, res, PATH_MAX);
     }
 #endif /* EDITOR */
 }
@@ -261,9 +255,7 @@ static void geteditor() {
  */
 static void getshell() {
 #ifdef SHELL
-    if (NULL == realpath(SHELL, shell)) {
-        shell[0] = '\0';
-    }
+    strncpy(shell, SHELL, PATH_MAX);
 #else
     const char* res = getenv("CFM_SHELL");
     if (!res) {
@@ -271,14 +263,10 @@ static void getshell() {
         if (!res) {
             shell[0] = '\0';
         } else {
-            if (!realpath(res, shell)) {
-                shell[0] = '\0';
-            }
+            strncpy(shell, res, PATH_MAX);
         }
     } else {
-        if (!realpath(res, shell)) {
-            shell[0] = '\0';
-        }
+        strncpy(shell, res, PATH_MAX);
     }
 #endif /* SHELL */
 }
@@ -288,9 +276,7 @@ static void getshell() {
  */
 static void getopener() {
 #ifdef OPENER
-    if (NULL == realpath(OPENER, opener)) {
-        shell[0] = '\0';
-    }
+    strncpy(opener, OPENER, PATH_MAX);
 #else
     const char* res = getenv("CFM_OPENER");
     if (!res) {
@@ -298,14 +284,10 @@ static void getopener() {
         if (!res) {
             opener[0] = '\0';
         } else {
-            if (!realpath(res, opener)) {
-                opener[0] = '\0';
-            }
+            strncpy(opener, res, PATH_MAX);
         }
     } else {
-        if (!realpath(res, opener)) {
-            opener[0] = '\0';
-        }
+        strncpy(opener, res, PATH_MAX);
     }
 #endif
 }
