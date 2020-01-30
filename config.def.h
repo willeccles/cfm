@@ -99,10 +99,10 @@
 /* VIEW_COUNT:
  * If not set, cfm will allow for two views by default.
  * Else, it will use this number of views. The value
- * of VIEW_COUNT must be within the range 1-5.
+ * of VIEW_COUNT must be within the range 1-10.
  *
  * Default: 2
- * Value: integer (1-5)
+ * Value: integer (1-10)
  */
 //#define VIEW_COUNT 2
 

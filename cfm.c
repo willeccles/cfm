@@ -74,9 +74,9 @@
 #endif
 
 #ifdef VIEW_COUNT
-# if VIEW_COUNT > 5
+# if VIEW_COUNT > 10
 #  undef VIEW_COUNT
-#  define VIEW_COUNT 5
+#  define VIEW_COUNT 10
 # elif VIEW_COUNT <= 0
 #  undef VIEW_COUNT
 #  define VIEW_COUNT 1
@@ -919,11 +919,17 @@ int main(int argc, char** argv) {
                 }
                 break;
 #if VIEW_COUNT > 1
+            case '0':
+                k = '9' + 1;
             case '1':
             case '2':
             case '3':
             case '4':
             case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
                 if (k - '1' < VIEW_COUNT) {
                     _view = k - '1';
                     view = &(views[_view]);
