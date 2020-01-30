@@ -65,6 +65,6 @@ The functions of some keys may be dependent on values set in `config.h`.
 | RET | Works like `o` if `ENTER_OPENS` was enabled at compile-time, else works like `l` |
 | TAB | Switches to the next view |
 | \` | Switches to the previous view |
-| 1-5 | Switches to view N, up to the number specified by `VIEW_COUNT` (default 2) |
+| 1-0 | Switches to view N, up to the number specified by `VIEW_COUNT` (default 2) |
 
 *Note: the arrow keys work the same as HJKL.*
