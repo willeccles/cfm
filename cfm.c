@@ -513,7 +513,7 @@ static int listdir(const char* path, struct listelem** list, size_t* listsize, s
  */
 static int readfname(char* out, const char* initialstr) {
     if (editor[0]) {
-        char template[] = "/tmp/cfmtmpXXXXXXXXXX";
+        char template[] = "/tmp/cfmtmp.XXXXXXXXXX";
         int fd;
         if (-1 == (fd = mkstemp(template))) {
             return -2;
@@ -902,6 +902,7 @@ int main(int argc, char** argv) {
 
     int k = -1, pk = -1, status;
     char tmpbuf[PATH_MAX];
+    char tmpbuf2[PATH_MAX];
     char tmpnam[NAME_MAX];
     while (1) {
         if (update) {
@@ -1292,6 +1293,59 @@ int main(int argc, char** argv) {
                 }
                 drawstatusline(&(list[view->selection]), dcount, view->selection, view->marks, view->pos);
                 drawentry(&(list[view->selection]), true);
+                break;
+            case 'R':
+                status = readfname(tmpnam, list[view->selection].name);
+                switch (status) {
+                    case -1:
+                        view->eprefix = "Error";
+                        view->emsg = "No editor available";
+                        view->errorshown = true;
+                        break;
+                    case -2:
+                        if (tmpnam[0] == '\0') {
+                            view->eprefix = "Error";
+                            view->emsg = strerror(errno);
+                            view->errorshown = true;
+                        } else {
+                            view->eprefix = "Warning";
+                            view->emsg = strerror(errno);
+                            view->errorshown = true;
+                            status = 0;
+                        }
+                        break;
+                    case -3:
+                        view->eprefix = "Error";
+                        view->emsg = "Invalid file name";
+                        view->errorshown = true;
+                        break;
+                }
+
+                if (status == 0) {
+                    snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, tmpnam);
+                    FILE* f = fopen(tmpbuf, "r");
+                    if (!f) {
+                        if (errno == ENOENT) {
+                            // the target file does not exist
+                            snprintf(tmpbuf2, PATH_MAX, "%s/%s", view->wd, list[view->selection].name);
+                            if (-1 == rename(tmpbuf2, tmpbuf)) {
+                                view->eprefix = "Error";
+                                view->emsg = strerror(errno);
+                                view->errorshown = true;
+                            }
+                        } else {
+                            view->eprefix = "Error";
+                            view->emsg = strerror(errno);
+                            view->errorshown = true;
+                        }
+                    } else {
+                        view->eprefix = "Error";
+                        view->emsg = "Target file already exists";
+                        view->errorshown = true;
+                        fclose(f);
+                    }
+                }
+                update = true;
                 break;
         }
 
