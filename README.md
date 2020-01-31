@@ -52,6 +52,7 @@ The functions of some keys may be dependent on values set in `config.h`.
 | k | Move up |
 | l | Enter directory, or open file in `EDITOR` |
 | dd | Delete currently selected file or directory (there is no confirmation, be careful) |
+| T | Creates a new file, opening `EDITOR` to obtain a filename |
 | gg | Move to top |
 | G | Move to bottom |
 | m | Mark for deletion |

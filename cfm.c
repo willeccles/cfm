@@ -519,51 +519,40 @@ static int readfname(char* out, const char* initialstr) {
             return -2;
         }
 
-        FILE* tmpf = fdopen(fd, "rw");
-        if (!tmpf) {
-            return -2;
-        }
-
         int rval = 0;
 
         if (initialstr) {
-            /*
-            if (EOF == fputs(initialstr, tmpf)) {
+            if (-1 == write(fd, initialstr, strlen(initialstr))) {
                 rval = -2;
+            } else {
+                if (-1 == lseek(fd, 0, SEEK_SET)) {
+                    rval = -2;
+                }
             }
-            */
         }
 
         if (rval == 0) {
             execcmd("/tmp/", editor, template);
 
-            if (NULL == fgets(out, NAME_MAX, tmpf)) {
-                if (ferror(tmpf)) {
-                    rval = -2;
-                    out[0] = '\0';
-                } else if (feof(tmpf)) {
-                    rval = -3;
-                    out[0] = '\0';
-                }
+            ssize_t c;
+            memset(out, 0, NAME_MAX);
+            if (-1 == (c = read(fd, out, NAME_MAX - 1))) {
+                rval = -2;
+                out[0] = '\0';
             } else {
-                int sln = strlen(out);
-                if (sln) {
-                    if (out[strlen(out) - 1] == '\n') {
-                        out[strlen(out) - 1] = '\0';
-                    }
-                    rval = 0;
-                } else {
-                    out[0] = '\0';
+                if (out[0] == '\0') {
                     rval = -3;
                 }
+                char* nl = strchr(out, '\n');
+                if (nl != NULL) {
+                    *nl = '\0';
+                }
+                rval = 0;
             }
         }
 
-        fclose(tmpf);
-        if (0 != remove(template)) {
-            rval = -2;
-        }
-
+        unlink(template);
+        close(fd);
         return rval;
     } else {
         return -1;
@@ -911,7 +900,7 @@ int main(int argc, char** argv) {
         view->emsg = "Trash dir not available";
     }
 
-    int k, pk, status;
+    int k = -1, pk = -1, status;
     char tmpbuf[PATH_MAX];
     char tmpnam[NAME_MAX];
     while (1) {
@@ -1041,6 +1030,53 @@ int main(int argc, char** argv) {
                     } while (delstack && delstack->mass);
                     update = 1;
                 }
+                break;
+            case 'T':
+                status = readfname(tmpnam, "new file name");
+                switch (status) {
+                    case -1:
+                        view->eprefix = "Error";
+                        view->emsg = "No editor available";
+                        view->errorshown = true;
+                        break;
+                    case -2:
+                        if (tmpnam[0] == '\0') {
+                            view->eprefix = "Error";
+                            view->emsg = strerror(errno);
+                            view->errorshown = true;
+                        } else {
+                            view->eprefix = "Warning";
+                            view->emsg = strerror(errno);
+                            view->errorshown = true;
+                            status = 0;
+                        }
+                        break;
+                    case -3:
+                        view->eprefix = "Error";
+                        view->emsg = "Invalid file name";
+                        view->errorshown = true;
+                        break;
+                }
+
+                if (status == 0) {
+                    snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, tmpnam);
+                    FILE* f = fopen(tmpbuf, "wx");
+                    if (!f) {
+                        if (errno == EEXIST) {
+                            view->eprefix = "Error";
+                            view->emsg = "File already exists";
+                            view->errorshown = true;
+                        } else {
+                            view->eprefix = "Error";
+                            view->emsg = strerror(errno);
+                            view->errorshown = true;
+                        }
+                    } else {
+                        fclose(f);
+                    }
+                }
+                update = true;
+
                 break;
         }
 
@@ -1256,53 +1292,6 @@ int main(int argc, char** argv) {
                 }
                 drawstatusline(&(list[view->selection]), dcount, view->selection, view->marks, view->pos);
                 drawentry(&(list[view->selection]), true);
-                break;
-            case 'T':
-                status = readfname(tmpnam, "newfile.txt");
-                switch (status) {
-                    case -1:
-                        view->eprefix = "Error";
-                        view->emsg = "No editor available";
-                        view->errorshown = true;
-                        break;
-                    case -2:
-                        if (tmpnam[0] == '\0') {
-                            view->eprefix = "Error";
-                            view->emsg = strerror(errno);
-                            view->errorshown = true;
-                        } else {
-                            view->eprefix = "Warning";
-                            view->emsg = strerror(errno);
-                            view->errorshown = true;
-                            status = 0;
-                        }
-                        break;
-                    case -3:
-                        view->eprefix = "Error";
-                        view->emsg = "Invalid file name";
-                        view->errorshown = true;
-                        break;
-                }
-
-                if (status == 0) {
-                    snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, tmpnam);
-                    FILE* f = fopen(tmpbuf, "wx");
-                    if (!f) {
-                        if (errno == EEXIST) {
-                            view->eprefix = "Error";
-                            view->emsg = "File already exists";
-                            view->errorshown = true;
-                        } else {
-                            view->eprefix = "Error";
-                            view->emsg = strerror(errno);
-                            view->errorshown = true;
-                        }
-                    } else {
-                        fclose(f);
-                    }
-                }
-                update = true;
-
                 break;
         }
 
