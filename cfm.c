@@ -73,6 +73,10 @@
 # define MARK_SYMBOL '!'
 #endif
 
+#ifndef ALLOW_SPACES
+# define ALLOW_SPACES 1
+#endif
+
 #ifdef VIEW_COUNT
 # if VIEW_COUNT > 10
 #  undef VIEW_COUNT
@@ -547,7 +551,23 @@ static int readfname(char* out, const char* initialstr) {
                 if (nl != NULL) {
                     *nl = '\0';
                 }
+                
                 rval = 0;
+
+                // validate the string
+                // only allow POSIX portable paths and spaces if enabled
+                // which is to say A-Za-z0-9._-
+                for (char* x = out; *x; x++) {
+                    if (!(isalnum(*x) || *x == '.' || *x == '_' || *x == '-'
+#if ALLOW_SPACES
+                        || *x == ' '
+#endif
+                        )) {
+                        rval = -3;
+                        out[0] = '\0';
+                        break;
+                    }
+                }
             }
         }
 
@@ -1077,7 +1097,46 @@ int main(int argc, char** argv) {
                     }
                 }
                 update = true;
-
+                break;
+            case 'M':
+                status = readfname(tmpnam, "new directory name");
+                switch (status) {
+                    case -1:
+                        view->eprefix = "Error";
+                        view->emsg = "No editor available";
+                        view->errorshown = true;
+                        break;
+                    case -2:
+                        if (tmpnam[0] == '\0') {
+                            view->eprefix = "Error";
+                            view->emsg = strerror(errno);
+                            view->errorshown = true;
+                        } else {
+                            view->eprefix = "Warning";
+                            view->emsg = strerror(errno);
+                            view->errorshown = true;
+                            status = 0;
+                        }
+                        break;
+                    case -3:
+                        view->eprefix = "Error";
+                        view->emsg = "Invalid directory name";
+                        view->errorshown = true;
+                        break;
+                }
+                snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, tmpnam);
+                if (-1 == mkdir(tmpbuf, 0751)) {
+                    if (errno == EEXIST) {
+                        view->eprefix = "Error";
+                        view->emsg = "Directory already exists";
+                        view->errorshown = true;
+                    } else {
+                        view->eprefix = "Error";
+                        view->emsg = strerror(errno);
+                        view->errorshown = true;
+                    }
+                }
+                update = true;
                 break;
         }
 

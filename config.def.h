@@ -106,4 +106,17 @@
  */
 //#define VIEW_COUNT 2
 
+/* ALLOW_SPACES:
+ * If not set, cfm will allow spaces when creating new
+ * files/directories. If set to 0, only POSIX
+ * "fully portable filenames" will be allowed,
+ * which includes the characters 0-9A-Za-z._-
+ * When enabled (or unset), spaces will be added to
+ * the allowed characters.
+ *
+ * Default: 1
+ * Value: boolean (1 or 0)
+ */
+//#define ALLOW_SPACES 1
+
 #endif

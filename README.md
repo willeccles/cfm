@@ -47,13 +47,14 @@ The functions of some keys may be dependent on values set in `config.h`.
 | Key(s) | Function |
 | ------ | -------- |
 | q, ESC | Quit cfm |
-| h | Go up a directory |
-| j | Move down |
-| k | Move up |
-| l | Enter directory, or open file in `EDITOR` |
+| h | Go up a directory[<sup>1</sup>](#1) |
+| j | Move down[<sup>1</sup>](#1) |
+| k | Move up[<sup>1</sup>](#1) |
+| l | Enter directory, or open file in `EDITOR`[<sup>1</sup>](#1) |
 | dd | Delete currently selected file or directory (there is no confirmation, be careful) |
-| T | Creates a new file, opening `EDITOR` to obtain a filename |
-| R | Renames a file, opening `EDITOR` to edit the filename |
+| T | Creates a new file, opening `EDITOR` to obtain a filename[<sup>2</sup>](#2) |
+| M | Creates a new directory, opening `EDITOR` to obtain a directory name[<sup>2</sup>](#2) |
+| R | Renames a file, opening `EDITOR` to edit the filename[<sup>2</sup>](#2) |
 | gg | Move to top |
 | G | Move to bottom |
 | m | Mark for deletion |
@@ -69,4 +70,10 @@ The functions of some keys may be dependent on values set in `config.h`.
 | \` | Switches to the previous view |
 | 1-0 | Switches to view N, up to the number specified by `VIEW_COUNT` (default 2) |
 
-*Note: the arrow keys work the same as HJKL.*
+---
+
+<a class="anchor" id="1"></a>The arrow keys work the same as HJKL.
+
+<a class="anchor" id="2"></a>The available characters for filenames are `A-Za-z
+._-` by default, which is POSIX "fully portable filenames" plus spaces. If
+you wish, you can disable spaces by setting `ALLOW_SPACES` to 0.

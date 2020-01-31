@@ -79,7 +79,19 @@ Spawn a shell (defined by \fISHELL\fR) in a directory
 
 .TP
 .BI T
-Create a new file by opening \fIEDITOR\fR to enter a filename
+Create a new file, opening \fIEDITOR\fR to enter a filename
+
+.TP
+.BI M
+Create a new directory, opening \fIEDITOR\fR to enter a directory name
+
+Note: for both
+.BI T
+and
+.BI M
+, the allowed characters default to POSIX "fully portable filename" standards
+with the addition of spaces: \fI[A-Za-z0-9 ._-]\fR. Spaces can be disabled by
+setting \fIALLOW_SPACES\fR to 0 in \fIconfig.h\fR.
 
 .TP
 .BI R
