@@ -1,0 +1,24 @@
+name: CFM Build
+
+on:
+  push:
+    paths:
+      - "*.c"
+      - "*.h"
+  pull_request:
+    paths:
+      - "*.c"
+      - "*.h"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest]
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: make
+      run: make
