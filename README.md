@@ -72,8 +72,8 @@ The functions of some keys may be dependent on values set in `config.h`.
 
 ---
 
-<a class="anchor" id="1"></a>The arrow keys work the same as HJKL.
+<a class="anchor" id="1"></a>1: The arrow keys work the same as HJKL.
 
-<a class="anchor" id="2"></a>The available characters for filenames are `A-Za-z
+<a class="anchor" id="2"></a>2: The available characters for filenames are `A-Za-z
 ._-` by default, which is POSIX "fully portable filenames" plus spaces. If
 you wish, you can disable spaces by setting `ALLOW_SPACES` to 0.
