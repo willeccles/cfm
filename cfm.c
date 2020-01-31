@@ -70,7 +70,7 @@
 #endif
 
 #ifndef MARK_SYMBOL
-# define MARK_SYMBOL '!'
+# define MARK_SYMBOL '^'
 #endif
 
 #ifndef ALLOW_SPACES
