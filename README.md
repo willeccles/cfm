@@ -11,7 +11,9 @@ or not you like the name and/or the dev, like with all software.
 *Note: the screenshot above has a non-default pointer and no alternative
 views enabled.*
 
-[Demo](https://asciinema.org/a/296578)
+[Demo](https://asciinema.org/a/297087) (this demo does not show off *all* of
+cfm's features, but it shows off deleting, undoing, marking, and basic
+navigation.
 
 ## Configuration
 
