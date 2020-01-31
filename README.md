@@ -1,5 +1,7 @@
 # Cactus File Manager
 
+![build](https://github.com/WillEccles/cfm/workflows/CFM%20Build/badge.svg)
+
 Cactus File manager (cfm) is a TUI file manager with some features here and
 there. It's quick and light. Whether or not you should use it depends on whether
 or not you like the name and/or the dev, like with all software.
