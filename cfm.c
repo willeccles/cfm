@@ -204,12 +204,12 @@ static int elemcmp(const void* a, const void* b) {
     const struct listelem* y = b;
 
     if ((x->type == ELEM_DIR || x->type == ELEM_DIRLINK) &&
-        (y->type != ELEM_DIR && y->type != ELEM_DIRLINK)) {
+            (y->type != ELEM_DIR && y->type != ELEM_DIRLINK)) {
         return -1;
     }
 
     if ((y->type == ELEM_DIR || y->type == ELEM_DIRLINK) &&
-        (x->type != ELEM_DIR && x->type != ELEM_DIRLINK)) {
+            (x->type != ELEM_DIR && x->type != ELEM_DIRLINK)) {
         return 1;
     }
 
@@ -352,7 +352,7 @@ static int termsize() {
  */
 static int setupterm() {
     setvbuf(stdout, NULL, _IOFBF, 0);
-    
+
     struct termios new_term = old_term;
     new_term.c_oflag &= ~OPOST;
     new_term.c_lflag &= ~(ECHO | ICANON);
@@ -361,14 +361,14 @@ static int setupterm() {
         perror("tcsetattr");
         return 1;
     }
-    
+
     printf(
-        "\033[?1049h" // use alternative screen buffer
-        "\033[?7l"    // disable line wrapping
-        "\033[?25l"   // hide cursor
-        "\033[2J"     // clear screen
-        "\033[2;%dr", // limit scrolling to our rows
-        rows-1);
+            "\033[?1049h" // use alternative screen buffer
+            "\033[?7l"    // disable line wrapping
+            "\033[?25l"   // hide cursor
+            "\033[2J"     // clear screen
+            "\033[2;%dr", // limit scrolling to our rows
+            rows-1);
 
     return 0;
 }
@@ -385,11 +385,11 @@ static void resetterm() {
     }
 
     printf(
-        "\033[?7h"    // enable line wrapping
-        "\033[?25h"   // unhide cursor
-        "\033[r"     // reset scroll region
-        "\033[?1049l" // restore main screen
-    );
+            "\033[?7h"    // enable line wrapping
+            "\033[?25h"   // unhide cursor
+            "\033[r"     // reset scroll region
+            "\033[?1049l" // restore main screen
+          );
 
     fflush(stdout);
 }
@@ -402,7 +402,7 @@ static void execcmd(const char* path, const char* cmd, const char* arg) {
     if (pid < 0) {
         return;
     }
-    
+
     resetterm();
 
     if (pid == 0) {
@@ -495,12 +495,88 @@ static int listdir(const char* path, struct listelem** list, size_t* listsize, s
 }
 
 /*
+ * Get a filename from the user and store it in 'out'.
+ * out must point to a buffer capable of containing
+ * at least NAME_MAX bytes.
+ *
+ * initialstr is the text to write into the file before
+ * the user edits it.
+ *
+ * Returns 0 on success, else:
+ *   -1 = no editor
+ *   -2 = other error (check errno)
+ *   -3 = invalid filename entered
+ *
+ * If an error occurs but the data in 'out'
+ * is still usable, it will be there. Else, out will
+ * be empty.
+ */
+static int readfname(char* out, const char* initialstr) {
+    if (editor[0]) {
+        char template[] = "/tmp/cfmtmpXXXXXXXXXX";
+        int fd;
+        if (-1 == (fd = mkstemp(template))) {
+            return -2;
+        }
+
+        FILE* tmpf = fdopen(fd, "rw");
+        if (!tmpf) {
+            return -2;
+        }
+
+        int rval = 0;
+
+        if (initialstr) {
+            /*
+            if (EOF == fputs(initialstr, tmpf)) {
+                rval = -2;
+            }
+            */
+        }
+
+        if (rval == 0) {
+            execcmd("/tmp/", editor, template);
+
+            if (NULL == fgets(out, NAME_MAX, tmpf)) {
+                if (ferror(tmpf)) {
+                    rval = -2;
+                    out[0] = '\0';
+                } else if (feof(tmpf)) {
+                    rval = -3;
+                    out[0] = '\0';
+                }
+            } else {
+                int sln = strlen(out);
+                if (sln) {
+                    if (out[strlen(out) - 1] == '\n') {
+                        out[strlen(out) - 1] = '\0';
+                    }
+                    rval = 0;
+                } else {
+                    out[0] = '\0';
+                    rval = -3;
+                }
+            }
+        }
+
+        fclose(tmpf);
+        if (0 != remove(template)) {
+            rval = -2;
+        }
+
+        return rval;
+    } else {
+        return -1;
+    }
+}
+
+/*
  * Get a key. Wraps getchar() and returns hjkl instead of arrow keys.
  * Also, returns 
  */
 static int getkey() {
     char c[3];
-    
+
     ssize_t n = read(STDIN_FILENO, c, 3);
     if (n <= 0) {
         return -1;
@@ -529,7 +605,7 @@ static int getkey() {
  */
 static void drawentry(struct listelem* e, bool selected) {
     printf("\033[2K"); // clear line
-    
+
 #if BOLD_POINTER
 # define PBOLD printf("\033[1m")
 #else
@@ -568,7 +644,7 @@ static void drawentry(struct listelem* e, bool selected) {
         printf("\033[7m");
     }
 #endif
-    
+
 #if INDENT_SELECTION
     if (selected) {
         printf("%s", POINTER);
@@ -581,8 +657,8 @@ static void drawentry(struct listelem* e, bool selected) {
     if (e->marked) {
         printf("\033[1m");
         if (e->type == ELEM_EXEC
-            || e->type == ELEM_DIR
-            || e->type == ELEM_DIRLINK) {
+                || e->type == ELEM_DIR
+                || e->type == ELEM_DIRLINK) {
             printf("\033[1m");
         }
     }
@@ -616,16 +692,16 @@ static void drawentry(struct listelem* e, bool selected) {
  */
 static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m, size_t p) {
     printf("\033[%d;H" // go to the bottom row
-        "\033[2K" // clear the row
-        "\033[37;7;1m", // inverse + bold
-        rows);
+            "\033[2K" // clear the row
+            "\033[37;7;1m", // inverse + bold
+            rows);
 
     int p1 = 0, p2 = 0;
     printf(" %zu/%zu" // position
-        "%n", // chars printed
-        n ? s+1 : n,
-        n,
-        &p1);
+            "%n", // chars printed
+            n ? s+1 : n,
+            n,
+            &p1);
     if (m) {
         printf(" (%zu marked)%n", m, &p2);
     }
@@ -639,9 +715,9 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m, siz
  */
 static void drawstatuslineerror(const char* prefix, const char* error, size_t p) {
     printf("\033[%d;H"
-        "\033[2K"
-        "\033[31;7;1m",
-        rows);
+            "\033[2K"
+            "\033[31;7;1m",
+            rows);
     int n;
     printf(" %s: %n", prefix, &n);
     printf("%-*s\r", cols-n-1, error);
@@ -656,15 +732,15 @@ static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t 
     // go to the top and print the info bar
     int p;
     printf("\033[2J" // clear
-        "\033[H" // top left
-        "\033[37;7;1m"); // style
+            "\033[H" // top left
+            "\033[37;7;1m"); // style
 #if VIEW_COUNT > 1
     printf(" %d: %s%n", // working directory + view
-        v+1, wd, &p);
+            v+1, wd, &p);
 #else
     (void)v;
     printf(" %s%n", // print working directory
-        wd, &p);
+            wd, &p);
 #endif
     printf("%-*s", (int)(cols - p), (wd[1] == '\0') ? "" : "/");
 
@@ -805,12 +881,12 @@ int main(int argc, char** argv) {
     for (int i = 0; i < VIEW_COUNT; i++) {
         views[i] = (struct view){
             .wd = NULL,
-            .errorshown = false,
-            .selection = 0,
-            .pos = 0,
-            .lastsel = 0,
-            .lastpos = 0,
-            .marks = 0,
+                .errorshown = false,
+                .selection = 0,
+                .pos = 0,
+                .lastsel = 0,
+                .lastpos = 0,
+                .marks = 0,
         };
     }
 
@@ -837,6 +913,7 @@ int main(int argc, char** argv) {
 
     int k, pk, status;
     char tmpbuf[PATH_MAX];
+    char tmpnam[NAME_MAX];
     while (1) {
         if (update) {
             update = false;
@@ -1081,7 +1158,7 @@ int main(int argc, char** argv) {
                     }
 
                     snprintf(delstack->original, PATH_MAX, "%s/%s", view->wd, list[view->selection].name);
-                    
+
                     snprintf(tmpbuf, PATH_MAX, "%s/%d", trashdir, delstack->id);
                     if (0 != rename(delstack->original, tmpbuf)) {
                         view->eprefix = "Error deleting";
@@ -1179,6 +1256,53 @@ int main(int argc, char** argv) {
                 }
                 drawstatusline(&(list[view->selection]), dcount, view->selection, view->marks, view->pos);
                 drawentry(&(list[view->selection]), true);
+                break;
+            case 'T':
+                status = readfname(tmpnam, "newfile.txt");
+                switch (status) {
+                    case -1:
+                        view->eprefix = "Error";
+                        view->emsg = "No editor available";
+                        view->errorshown = true;
+                        break;
+                    case -2:
+                        if (tmpnam[0] == '\0') {
+                            view->eprefix = "Error";
+                            view->emsg = strerror(errno);
+                            view->errorshown = true;
+                        } else {
+                            view->eprefix = "Warning";
+                            view->emsg = strerror(errno);
+                            view->errorshown = true;
+                            status = 0;
+                        }
+                        break;
+                    case -3:
+                        view->eprefix = "Error";
+                        view->emsg = "Invalid file name";
+                        view->errorshown = true;
+                        break;
+                }
+
+                if (status == 0) {
+                    snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, tmpnam);
+                    FILE* f = fopen(tmpbuf, "wx");
+                    if (!f) {
+                        if (errno == EEXIST) {
+                            view->eprefix = "Error";
+                            view->emsg = "File already exists";
+                            view->errorshown = true;
+                        } else {
+                            view->eprefix = "Error";
+                            view->emsg = strerror(errno);
+                            view->errorshown = true;
+                        }
+                    } else {
+                        fclose(f);
+                    }
+                }
+                update = true;
+
                 break;
         }
 
