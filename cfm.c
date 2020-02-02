@@ -1183,7 +1183,6 @@ int main(int argc, char** argv) {
                 view->pos = 0;
                 view->selection = 0;
                 redraw = true;
-                pk = 0;
                 break;
             case 'G':
                 view->selection = dcount - 1;
@@ -1287,7 +1286,6 @@ int main(int argc, char** argv) {
                     }
                 }
                 update = true;
-                pk = 0;
                 break;
             case 'D':
                 if (!view->marks) {
@@ -1408,7 +1406,11 @@ int main(int argc, char** argv) {
                 break;
         }
 
-        pk = k;
+        if (pk != k) {
+            pk = k;
+        } else {
+            pk = 0;
+        }
         fflush(stdout);
     }
 
