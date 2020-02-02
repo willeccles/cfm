@@ -16,7 +16,7 @@ $(TARGET): $(CONF) $(SRC)
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(SRC) -o $@
 
 $(CONF):
-	@cp -nv $(DEFCONF) $(CONF)
+	@cp -v $(DEFCONF) $(CONF)
 
 install: $(TARGET)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
