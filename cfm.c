@@ -5,7 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-#include <copyfile.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
