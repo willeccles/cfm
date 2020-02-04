@@ -114,11 +114,13 @@ struct listelem {
 #define E_DIR(t) ((t)==ELEM_DIR || (t)==ELEM_DIRLINK)
 
 static int del_id = 0;
+static int mdel_id = 0;
 
 struct deletedfile {
     char* original;
     int id;
     bool mass;
+    int massid;
     struct deletedfile* prev;
 };
 
@@ -156,6 +158,9 @@ static struct deletedfile* newdeleted(bool mass) {
 
     d->id = del_id++;
     d->mass = mass;
+    if (d->mass) {
+        d->massid = mdel_id;
+    }
     d->prev = NULL;
 
     return d;
@@ -924,6 +929,7 @@ int main(int argc, char** argv) {
     char tmpbuf[PATH_MAX];
     char tmpbuf2[PATH_MAX];
     char tmpnam[NAME_MAX];
+    char yankbuf[PATH_MAX];
     while (1) {
         if (update) {
             update = false;
@@ -1039,7 +1045,9 @@ int main(int argc, char** argv) {
 #endif
             case 'u':
                 if (trashdir[0] && delstack != NULL) {
+                    int did = 0;
                     do {
+                        did = delstack->massid;
                         snprintf(tmpbuf, PATH_MAX, "%s/%d", trashdir, delstack->id);
                         if (0 != rename(tmpbuf, delstack->original)) {
                             view->eprefix = "Error undoing";
@@ -1048,7 +1056,7 @@ int main(int argc, char** argv) {
                         } else {
                             delstack = freedeleted(delstack);
                         }
-                    } while (delstack && delstack->mass);
+                    } while (delstack && delstack->mass && delstack->massid == did);
                     update = 1;
                 }
                 break;
@@ -1333,6 +1341,9 @@ int main(int argc, char** argv) {
                         }
                     }
                 }
+                if (trashdir[0]) {
+                    mdel_id++;
+                }
                 update = true;
                 break;
             case 'e':
@@ -1403,6 +1414,12 @@ int main(int argc, char** argv) {
                     }
                 }
                 update = true;
+                break;
+            case 'y':
+                if (pk != 'y') {
+                    break;
+                }
+                snprintf(yankbuf, PATH_MAX, "%s/%s", view->wd, list[view->selection].name);
                 break;
         }
 
