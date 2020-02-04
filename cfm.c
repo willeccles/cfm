@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+#include <copyfile.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -88,6 +89,8 @@
 #else
 # define VIEW_COUNT 2
 #endif
+
+#define COPYFLAGS (COPYFILE_ALL | COPYFILE_EXCL | COPYFILE_NOFOLLOW | COPYFILE_RECURSIVE)
 
 enum elemtype {
     ELEM_DIR,
@@ -930,6 +933,8 @@ int main(int argc, char** argv) {
     char tmpbuf2[PATH_MAX];
     char tmpnam[NAME_MAX];
     char yankbuf[PATH_MAX];
+    char putbuf[PATH_MAX];
+    bool hasyanked = false;
     while (1) {
         if (update) {
             update = false;
@@ -1420,6 +1425,13 @@ int main(int argc, char** argv) {
                     break;
                 }
                 snprintf(yankbuf, PATH_MAX, "%s/%s", view->wd, list[view->selection].name);
+                hasyanked = true;
+                break;
+            case 'p':
+                if (hasyanked) {
+                    char* bs = basename(yankbuf);
+                    snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, bs);
+                }
                 break;
         }
 
