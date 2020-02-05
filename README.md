@@ -37,7 +37,7 @@ can specify these environment variables to configure cfm without rebuilding.
 
 If you are on Arch Linux or an Arch based distro you can install `cfm` via the AUR manually using `makepkg` or by using an AUR helper.
 `https://aur.archlinux.org/packages/cfm/`
-`yay -S cfm'
+`yay -S cfm`
 or equivalent for your favorite AUR helper.
 The AUR package is currently maintained by Hawkeye0021.
 
