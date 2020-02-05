@@ -934,7 +934,7 @@ int main(int argc, char** argv) {
     char yankbuf[PATH_MAX];
     char putbuf[PATH_MAX];
     bool hasyanked = false;
-    while (1) {
+    while (1&&1) {
         if (update) {
             update = false;
             status = listdir(view->wd, &list, &listsize, &newdcount, showhidden);
