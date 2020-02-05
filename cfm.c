@@ -712,17 +712,16 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m, siz
             "\033[37;7;1m", // inverse + bold
             rows);
 
-    int p1 = 0, p2 = 0;
-    printf(" %zu/%zu" // position
-            "%n", // chars printed
-            n ? s+1 : n,
-            n,
-            &p1);
-    if (m) {
-        printf(" (%zu marked)%n", m, &p2);
+    static char statusbuf[512] = {0};
+
+    if (!m) {
+        snprintf(statusbuf, 512, " %zu/%zu", n ? s+1 : n, n);
+    } else {
+        snprintf(statusbuf, 512, " %zu/%zu (%zu marked)", n ? s+1 : n, n, m);
     }
+    printf("%s", statusbuf);
     // print the type of the file
-    printf("%*s \r", cols-p1-p2-1, elemtypestrings[l->type]);
+    printf("%*s \r", cols-(int)strlen(statusbuf)-1, elemtypestrings[l->type]);
     printf("\033[m\033[%zu;H", p+2); // move cursor back and reset formatting
 }
 
@@ -734,9 +733,10 @@ static void drawstatuslineerror(const char* prefix, const char* error, size_t p)
             "\033[2K"
             "\033[31;7;1m",
             rows);
-    int n;
-    printf(" %s: %n", prefix, &n);
-    printf("%-*s\r", cols-n-1, error);
+    static char errlinebuf[512] = {0};
+    snprintf(errlinebuf, 512, " %s: ", prefix);
+    printf("%s", errlinebuf);
+    printf("%-*s\r", cols-(int)strlen(errlinebuf)-1, error);
     printf("\033[m\033[%zu;H", p+2);
 }
 
@@ -746,19 +746,19 @@ static void drawstatuslineerror(const char* prefix, const char* error, size_t p)
  */
 static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o, size_t m, int v) {
     // go to the top and print the info bar
-    int p;
     printf("\033[2J" // clear
             "\033[H" // top left
             "\033[37;7;1m"); // style
+    static char barbuf[512] = {0};
 #if VIEW_COUNT > 1
-    printf(" %d: %s%n", // working directory + view
-            v+1, wd, &p);
+    snprintf(barbuf, 512, " %d: %s", v+1, wd);
 #else
     (void)v;
-    printf(" %s%n", // print working directory
-            wd, &p);
+    snprintf(barbuf, 512, " %s", wd);
 #endif
-    printf("%-*s", (int)(cols - p), (wd[1] == '\0') ? "" : "/");
+    printf("%s", barbuf);
+
+    printf("%-*s", (int)(cols - (int)strlen(barbuf)), (wd[1] == '\0') ? "" : "/");
 
     printf("\033[m"); // reset formatting
 
