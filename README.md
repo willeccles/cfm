@@ -2,9 +2,10 @@
 
 ![build](https://github.com/WillEccles/cfm/workflows/CFM%20Build/badge.svg)
 
-Cactus File manager (cfm) is a TUI file manager with some features here and
-there. It's quick and light. Whether or not you should use it depends on whether
-or not you like the name and/or the dev, like with all software.
+Cactus File Manager (cfm) is a TUI file manager with the goal of being simple,
+easy, and bloat-free, utilizing Vi-inspired keybinds. Whether or not
+you should use it depends on whether or not you like the name and/or the dev,
+like with all software.
 
 ![Example Configuration](screenshot.png)
 
@@ -35,19 +36,18 @@ can specify these environment variables to configure cfm without rebuilding.
 
 ## Installing
 
-If you are on Arch Linux or an Arch based distro you can install `cfm` via the AUR manually using `makepkg` or by using an AUR helper.
-`https://aur.archlinux.org/packages/cfm/`
-`yay -S cfm`
-or equivalent for your favorite AUR helper.
-The AUR package is currently maintained by Hawkeye0021.
+### From Source
 
-If you are installing from source, use `sudo make install`.
+Use `sudo make install`. You can specify a `PREFIX` or `DESTDIR` like with many
+makefiles. By default, `PREFIX` is `/usr/local/`, but if you wish to install
+into `/usr`, you can do `sudo make install PREFIX=/usr`.
 
-cfm is currently available as a package in the KISS community repository. If
-you are using the `kiss` package manager, update your community repo and use
-`kiss b cfm` and `kiss i cfm` to install cfm.
+### With a Package Manager
 
-The manual page will be installed regardless of how you install cfm.
+At the moment, cfm is available from the following sources:
+
+- [KISS](https://github.com/kisslinux/community/community/cfm) - Maintained by me (Will Eccles)
+- [AUR](https://aur.archlinux.org/packages/cfm/) - Maintained by Hawkeye0021
 
 ## Usage
 
