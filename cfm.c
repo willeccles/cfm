@@ -932,7 +932,7 @@ int main(int argc, char** argv) {
     char tmpbuf2[PATH_MAX];
     char tmpnam[NAME_MAX];
     char yankbuf[PATH_MAX];
-    char putbuf[PATH_MAX];
+    //char putbuf[PATH_MAX];
     bool hasyanked = false;
     while (1&&1) {
         if (update) {
@@ -1428,8 +1428,8 @@ int main(int argc, char** argv) {
                 break;
             case 'p':
                 if (hasyanked) {
-                    char* bs = basename(yankbuf);
-                    snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, bs);
+                    //char* bs = basename(yankbuf);
+                    //snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, bs);
                 }
                 break;
         }
