@@ -35,6 +35,12 @@ can specify these environment variables to configure cfm without rebuilding.
 
 ## Installing
 
+If you are on Arch Linux or an Arch based distro you can install `cfm` via the AUR manually using `makepkg` or by using an AUR helper.
+`https://aur.archlinux.org/packages/cfm/`
+`yay -S cfm'
+or equivalent for your favorite AUR helper.
+The AUR package is currently maintained by Hawkeye0021.
+
 If you are installing from source, use `sudo make install`.
 
 cfm is currently available as a package in the KISS community repository. If
