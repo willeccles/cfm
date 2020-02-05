@@ -46,7 +46,7 @@ into `/usr`, you can do `sudo make install PREFIX=/usr`.
 
 At the moment, cfm is available from the following sources:
 
-- [KISS](https://github.com/kisslinux/community/community/cfm) - Maintained by me (Will Eccles)
+- [KISS](https://github.com/kisslinux/community/tree/master/community/cfm) - Maintained by me (Will Eccles)
 - [AUR](https://aur.archlinux.org/packages/cfm/) - Maintained by Hawkeye0021
 
 ## Usage
