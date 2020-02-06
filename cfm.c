@@ -937,7 +937,7 @@ int main(int argc, char** argv) {
     bool hascut = false;
     int cutid = -1;
     char cutbuf[NAME_MAX];
-    while (1&&1) {
+    while (1) {
         if (update) {
             update = false;
             status = listdir(view->wd, &list, &listsize, &newdcount, showhidden);
