@@ -934,6 +934,9 @@ int main(int argc, char** argv) {
     char yankbuf[PATH_MAX];
     //char putbuf[PATH_MAX];
     bool hasyanked = false;
+    bool hascut = false;
+    int cutid = -1;
+    char cutbuf[NAME_MAX];
     while (1&&1) {
         if (update) {
             update = false;
@@ -1428,9 +1431,88 @@ int main(int argc, char** argv) {
                 break;
             case 'p':
                 if (hasyanked) {
+                    // TODO
                     //char* bs = basename(yankbuf);
                     //snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, bs);
+                } else if (hascut) {
+                    snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, cutbuf);
+                    snprintf(tmpbuf2, PATH_MAX, "%s/%d", trashdir, cutid);
+                    bool didpaste = true;
+                    do {
+                        if (!didpaste) {
+                            status = readfname(tmpnam, cutbuf);
+                            switch (status) {
+                                case -1:
+                                    view->eprefix = "Error";
+                                    view->emsg = "No editor available";
+                                    view->errorshown = true;
+                                    break;
+                                case -2:
+                                    if (tmpnam[0] == '\0') {
+                                        view->eprefix = "Error";
+                                        view->emsg = strerror(errno);
+                                        view->errorshown = true;
+                                    } else {
+                                        view->eprefix = "Warning";
+                                        view->emsg = strerror(errno);
+                                        view->errorshown = true;
+                                        status = 0;
+                                    }
+                                    break;
+                                case -3:
+                                    view->eprefix = "Error";
+                                    view->emsg = "Invalid file name";
+                                    view->errorshown = true;
+                                    break;
+                            }
+                            
+                            if (status == 0) {
+                                snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, tmpnam);
+                            } else {
+                                goto outofloop;
+                            }
+                        }
+                        FILE* f = fopen(tmpbuf, "r");
+                        if (!f) {
+                            if (errno == ENOENT) {
+                                // the target file does not exist
+                                // TODO copy the file
+
+                                didpaste = true;
+                            } else {
+                                view->eprefix = "Error";
+                                view->emsg = strerror(errno);
+                                view->errorshown = true;
+                            }
+                        } else {
+                            fclose(f);
+                            didpaste = false;
+                        }
+                    } while (!didpaste);
+outofloop:
+                    update = true;
                 }
+                break;
+            case 'X':
+#if 0 // TODO implement cut, then fix this
+                if (tmpbuf[0]) {
+                    snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, list[view->selection].name);
+                    snprintf(cutbuf, NAME_MAX, "%s", list[view->selection].name);
+                    snprintf(tmpbuf2, PATH_MAX, "%s/%d", trashdir, (cutid = del_id++));
+                    if (-1 == rename(tmpbuf, tmpbuf2)) {
+                        view->eprefix = "Error";
+                        view->emsg = strerror(errno);
+                        view->errorshown = true;
+                    } else {
+                        hascut = true;
+                    }
+                } else {
+                    view->eprefix = "Error";
+                    view->emsg = "No trash dir, cannot cut!";
+                    view->errorshown = true;
+                }
+#endif
+                update = true;
                 break;
         }
 
