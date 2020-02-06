@@ -5,6 +5,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+#ifdef __APPLE__
+# define _DARWIN_C_SOURCE
+#endif
+
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -838,7 +842,7 @@ int main(int argc, char** argv) {
     struct sigaction sa_resize = {
         .sa_handler = sigresize,
     };
-    if (sigaction(SIGTERM, &sa_resize, NULL) < 0) {
+    if (sigaction(SIGWINCH, &sa_resize, NULL) < 0) {
         perror("sigaction");
         exit(EXIT_FAILURE);
     }
