@@ -55,29 +55,29 @@ The functions of some keys may be dependent on values set in `config.h`.
 
 | Key(s) | Function |
 | ------ | -------- |
-| q, ESC | Quit cfm |
-| h | Go up a directory[<sup>1</sup>](#1) |
-| j | Move down[<sup>1</sup>](#1) |
-| k | Move up[<sup>1</sup>](#1) |
-| l | Enter directory, or open file in `EDITOR`[<sup>1</sup>](#1) |
-| dd | Delete currently selected file or directory (there is no confirmation, be careful) |
-| T | Creates a new file, opening `EDITOR` to obtain a filename[<sup>2</sup>](#2) |
-| M | Creates a new directory, opening `EDITOR` to obtain a directory name[<sup>2</sup>](#2) |
-| R | Renames a file, opening `EDITOR` to edit the filename[<sup>2</sup>](#2) |
-| gg | Move to top |
-| G | Move to bottom |
-| m | Mark for deletion |
-| D | Delete marked files (does not touch unmarked files) |
-| u | Undo the last deletion operation (if cfm was unable to access/create its trash directory `~/.cfmtrash`, deletion is permanent and this will not work) |
-| e | Open file or directory in `EDITOR` |
-| o | Open file or directory in `OPENER` |
-| S | Spawns a `SHELL` in the current directory |
-| r | Reload directory |
-| . | Toggle visibility of hidden files (dotfiles) |
-| RET | Works like `o` if `ENTER_OPENS` was enabled at compile-time, else works like `l` |
-| TAB | Switches to the next view |
-| \` | Switches to the previous view |
-| 1-0 | Switches to view N, up to the number specified by `VIEW_COUNT` (default 2) |
+| <kbd>q</kbd>, <kbd>Esc</kbd> | Quit cfm |
+| <kbd>h</kbd> | Go up a directory[<sup>1</sup>](#1) |
+| <kbd>j</kbd> | Move down[<sup>1</sup>](#1) |
+| <kbd>k</kbd> | Move up[<sup>1</sup>](#1) |
+| <kbd>l</kbd> | Enter directory, or open file in `EDITOR`[<sup>1</sup>](#1) |
+| <kbd>dd</kbd> | Delete currently selected file or directory (there is no confirmation, be careful) |
+| <kbd>T</kbd> | Creates a new file, opening `EDITOR` to obtain a filename[<sup>2</sup>](#2) |
+| <kbd>M</kbd> | Creates a new directory, opening `EDITOR` to obtain a directory name[<sup>2</sup>](#2) |
+| <kbd>R</kbd> | Renames a file, opening `EDITOR` to edit the filename[<sup>2</sup>](#2) |
+| <kbd>gg</kbd> | Move to top |
+| <kbd>G</kbd> | Move to bottom |
+| <kbd>m</kbd> | Mark for deletion |
+| <kbd>D</kbd> | Delete marked files (does not touch unmarked files) |
+| <kbd>u</kbd> | Undo the last deletion operation (if cfm was unable to access/create its trash directory `~/.cfmtrash`, deletion is permanent and this will not work) |
+| <kbd>e</kbd> | Open file or directory in `EDITOR` |
+| <kbd>o</kbd> | Open file or directory in `OPENER` |
+| <kbd>S</kbd> | Spawns a `SHELL` in the current directory |
+| <kbd>r</kbd> | Reload directory |
+| <kbd>.</kbd> | Toggle visibility of hidden files (dotfiles) |
+| <kbd>Return</kbd> | Works like <kbd>o</kbd> if `ENTER_OPENS` was enabled at compile-time, else works like <kbd>l</kbd> |
+| <kbd>Tab</kbd> | Switches to the next view |
+| <kbd>\`</kbd> | Switches to the previous view |
+| <kbd>1</kbd>...<kbd>0</kbd> | Switches to view N, up to the number specified by `VIEW_COUNT` (default 2) |
 
 ---
 
