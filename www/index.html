@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>cfm: Cactus File Manager</title>
+    </head>
+    <body>
+        <center>
+            <h1>cfm: Cactus File Manager</h1>
+        </center>
+        <h2>Description</h2>
+        <p>Cactus File Manager is a simple and fast file manager with zero
+        dependencies (apart from a C compiler). It has a sane default
+        configuration based on a Vi-inspired set of keybinds. Configuration is
+        simple, consisting of a config.h file modified before building, much
+        like <a href="https://suckless.org">suckless software</a>.</p>
+        <h2>Installing</h2>
+        <p>You can build and install cfm from source or install it via a
+        package manager (if packaged for your package manager). It is highly
+        recommended that you build it yourself, as you can then configure it
+        yourself instead of relying on the default configuration.</p>
+        <h3>Building from Source</h3>
+        <p>To build cfm, download
+        <a href="https://github.com/willeccles/cfm">the source</a>
+        and use <a href="https://www.gnu.org/software/make/">GNU make</a>
+        or a C compiler directly. To install, either copy the cfm binary to
+        your desired location or use the makefile to install it.</p>
+        <h3>Packages</h3>
+        <p>At the moment, cfm is packaged for the following platforms:
+        <ul>
+            <li><a href="https://github.com/kisslinux/community/tree/master/community/cfm">KISS</a>&mdash;Maintained by me</li>
+            <li><a href="https://aur.archlinux.org/packages/cfm/">AUR</a>&mdash;Maintained by Hawkeye0021</li>
+        </ul>
+        </p>
+        <h2>Configuration</h2>
+        <p>Before building, copy config.def.h to config.h and modify as
+        necessary. All options are explained in the comments. If you do not set
+        your editor, shell, or opener in the config file (or you have the
+        default config), you can set the environment variables
+        <var>$EDITOR</var>, <var>$SHELL</var>, and <var>$OPENER</var>. cfm will
+        always look for these at startup if configuration options were not set.
+        If these variables are set but you wish for cfm to use something else,
+        you can prepend the given variable with <var>$CFM_</var>, and it will
+        be used instead. For example, if your <var>$EDITOR</var> is Emacs and
+        you want cfm to use Vi, you can use <var>$CFM_EDITOR</var> set to
+        Vi.</p>
+        <h2>Keybindings</h2>
+        <p>The effects of some keys may be different depending on certain options
+        in config.h. Also note that the arrow keys may be used in place of
+        <kbd>hjkl</kbd>.
+        <table>
+            <tr>
+                <th>Key(s)</th>
+                <th>Function</th>
+            </tr>
+            <tr>
+                <td><kbd>q</kbd>, <kbd>Esc</kbd></td>
+                <td>Quit cfm</td>
+            </tr>
+            <tr>
+                <td><kbd>h</kbd></td>
+                <td>Go up a directory</td>
+            </tr>
+            <tr>
+                <td><kbd>j</kbd></td>
+                <td>Move down</td>
+            </tr>
+            <tr>
+                <td><kbd>k</kbd></td>
+                <td>Move up</td>
+            </tr>
+            <tr>
+                <td><kbd>l</kbd></td>
+                <td>Enter directory, or open file in <var>EDITOR</var></td>
+            </tr>
+            <tr>
+                <td><kbd>dd</kbd></td>
+                <td>Delete currently selected file or directory (there is no
+                    confirmation, be careful)</td>
+            </tr>
+            <tr>
+                <td><kbd>T</kbd></td>
+                <td>Creates a new file, opening <var>EDITOR</var> to obtain a
+                    filename</td>
+            </tr>
+            <tr>
+                <td><kbd>M</kbd></td>
+                <td>Creates a new directory, opening <var>EDITOR</var> to
+                    obtain a directory name</td>
+            </tr>
+            <tr>
+                <td><kbd>R</kbd></td>
+                <td>Renames a file, opening <var>EDITOR</var> to edit the
+                    filename</td>
+            </tr>
+            <tr>
+                <td><kbd>gg</kbd></td>
+                <td>Move to top</td>
+            </tr>
+            <tr>
+                <td><kbd>G</kbd></td>
+                <td>Move to bottom</td>
+            </tr>
+            <tr>
+                <td><kbd>m</kbd></td>
+                <td>Mark for deletion</td>
+            </tr>
+            <tr>
+                <td><kbd>D</kbd></td>
+                <td>Delete marked files (does not touch unmarked files)</td>
+            </tr>
+            <tr>
+                <td><kbd>u</kbd></td>
+                <td>Undo the last deletion operation (if cfm was unable to
+                    access/create its trash directory <var>~/.cfmtrash</var>,
+                    deletion is permanent and this will not work)</td>
+            </tr>
+            <tr>
+                <td><kbd>e</kbd></td>
+                <td>Open file or directory in <var>EDITOR</var></td>
+            </tr>
+            <tr>
+                <td><kbd>o</kbd></td>
+                <td>Open file or directory in <var>OPENER</var></td>
+            </tr>
+            <tr>
+                <td><kbd>S</kbd></td>
+                <td>Spawns a <var>SHELL</var> in the current directory</td>
+            </tr>
+            <tr>
+                <td><kbd>r</kbd></td>
+                <td>Reload directory</td>
+            </tr>
+            <tr>
+                <td><kbd>.</kbd></td>
+                <td>Toggle visibility of hidden files (dotfiles)</td>
+            </tr>
+            <tr>
+                <td><kbd>Return</kbd></td>
+                <td>Works like <kbd>o</kbd> if <var>ENTER_OPENS</var> was
+                    enabled at compile-time, else works like <kbd>l</kbd></td>
+            </tr>
+            <tr>
+                <td><kbd>Tab</kbd></td>
+                <td>Switches to the next view</td>
+            </tr>
+            <tr>
+                <td><kbd>`</kbd></td>
+                <td>Switches to the previous view</td>
+            </tr>
+            <tr>
+                <td><kbd>1</kbd>...<kbd>0</kbd></td>
+                <td>Switches to view N, up to the number specified by
+                    <var>VIEW_COUNT</var> (default 2)</td>
+            </tr>
+        </table>
+        </p>
+        <h2>License</h2>
+        <p>Cactus File Manager (cfm) is released by Will Eccles under the Mozilla Public License version 2.0. For details, see the LICENSE file distributed with the source code.</p>
+    </body>
+</html>
