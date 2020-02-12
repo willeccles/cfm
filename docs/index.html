@@ -46,6 +46,14 @@ body{margin:40px auto;max-width:700px;line-height:1.6;font-size:18px;color:#444;
         be used instead. For example, if your <var>$EDITOR</var> is Emacs and
         you want cfm to use Vi, you can use <var>$CFM_EDITOR</var> set to
         Vi.</p>
+        <h3>Temporary Directory</h3>
+        <p>When deleting or cutting files, cfm uses a temporary directory to
+        store them. You may specify a custom directory in config.h using the
+        <var>CFM_TMP</var> option. If you do not specify one, then cfm will
+        first look for the <var>$CFM_TMP</var> environment variable on startup.
+        If this is not found, then it will use /tmp/cfmtmp instead. If cfm
+        cannot create this directory, then it will disable cut/paste and undo,
+        meaning deletion is permanent.</p>
         <h2>Keybindings</h2>
         <p>The effects of some keys may be different depending on certain options
         in config.h. Also note that the arrow keys may be used in place of
