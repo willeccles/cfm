@@ -1522,8 +1522,8 @@ outofloop:
                     view->emsg = "No tmp dir, cannot cut!";
                     view->errorshown = true;
                 }
-#endif
                 update = true;
+#endif
                 break;
         }
 
