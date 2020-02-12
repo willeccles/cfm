@@ -27,6 +27,15 @@ variables. If it is preferable for
 .B cfm
 to use a different value for any of these, it can be specified by prepending
 \fICFM_\fR to any of the variables.
+.B cfm
+will also check for the \fICFM_TMP\fR environment variable for a location for its
+temp directory. If the variable is not set and \fICFM_TMP\fR was not set in
+\fIconfig.h\fR, it will attempt to use \fI/tmp/cfmtmp\fR. If the temporary
+directory cannot be created, then
+.B cfm
+will disable cut/paste and deletions will be permanent (no undo). Note also that
+.B cfm
+will not allow you do mark, delete, or otherwise modify the temporary directory.
 
 .SH USAGE
 Note: arrow keys work the same as hjkl.
