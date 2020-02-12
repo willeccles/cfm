@@ -29,6 +29,12 @@ option just for cfm, it will first try to find these variables prefixed with
 cfm to use emacs, you could use `export CFM_EDITOR='emacs'`. If you installed
 cfm via a package manager, or if you are using the default configuration, you
 can specify these environment variables to configure cfm without rebuilding.
+cfm uses a temporary directory for its deleted files (to enable undo and
+cut/paste). If it's not set in `config.h`, then cfm will attempt to use the
+`$CFM_TMP` environment variable. If this is not set either, then `/tmp/cfmtmp`
+will be used. If a temporary directory is not specified in any way or it cannot
+create the directory it is attempting to use, cfm will disable undo and
+cut/paste.
 
 ## Building
 
