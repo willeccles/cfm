@@ -38,6 +38,22 @@
  */
 //#define OPENER "xdg-open"
 
+/* TMP_DIR:
+ * If not set, cfm will attempt to use $CFM_TMP as its
+ * temporary file directory. If this does not exist,
+ * /tmp/cfmtmp will be used instead. TMP_DIR must be
+ * set to an absolute path. If you wish to disable temp
+ * files (which disables cut and paste as well as undo),
+ * you can set this to an empty string.
+ *
+ * Note that cfm will not allow you to mark or delete its
+ * temp directory.
+ *
+ * Default: "/tmp/cfmtmp"
+ * Value: string
+ */
+//#define TMP_DIR "/tmp/cfmtmp"
+
 /* ENTER_OPENS:
  * If not set, using enter will be the same as using
  * l or right arrow on normal files, aka they will be

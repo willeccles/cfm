@@ -137,7 +137,7 @@ static int pointerwidth = 2;
 static char editor[PATH_MAX];
 static char opener[PATH_MAX];
 static char shell[PATH_MAX];
-static char trashdir[PATH_MAX];
+static char tmpdir[PATH_MAX];
 
 static int rmFiles(const char *pathname, const struct stat *sbuf, int type, struct FTW *ftwb) {
     return remove(pathname) ? -1 : 0;
@@ -233,8 +233,9 @@ static int elemcmp(const void* a, const void* b) {
 
 /* 
  * Get the user's home dir.
+ * Unused, but left in case I add a ~ shortcut or something.
  */
-static char* gethome(char* out, size_t len) {
+static __attribute__((unused)) char* gethome(char* out, size_t len) {
     const char* home = getenv("HOME");
     if (!home) {
         return NULL;
@@ -308,26 +309,32 @@ static void getopener() {
 }
 
 /*
- * Get the trash directory.
+ * Get the tmp directory.
  */
-static void maketrashdir() {
-    if (gethome(trashdir, PATH_MAX - strlen("/.cfmtrash"))) {
-        strncat(trashdir, "/.cfmtrash", PATH_MAX - strlen(trashdir));
-        if (mkdir(trashdir, 0751)) {
-            if (errno == EEXIST) {
-                return;
-            }
-            trashdir[0] = '\0';
-        }
+static void maketmpdir() {
+#ifdef TMP_DIR
+    strncpy(tmpdir, TMP_DIR, PATH_MAX);
+#else
+    const char* res = getenv("CFM_TMP");
+    if (res) {
+        strncpy(tmpdir, res, PATH_MAX);
     } else {
-        trashdir[0] = '\0';
+        strncpy(tmpdir, "/tmp/cfmtmp", PATH_MAX);
+    }
+#endif
+    if (mkdir(tmpdir, 0751)) {
+        if (errno == EEXIST) {
+            return;
+        } else {
+            tmpdir[0] = '\0';
+        }
     }
 }
 
-static void emptytrash() {
-    if (trashdir[0]) {
-        if (0 != deldir(trashdir)) {
-            perror("unlink: ~/.cfmtrash");
+static void rmtmp() {
+    if (tmpdir[0]) {
+        if (0 != deldir(tmpdir)) {
+            perror("unlink: ~/.cfmtmp");
         }
     }
 }
@@ -833,7 +840,7 @@ int main(int argc, char** argv) {
     geteditor();
     getshell();
     getopener();
-    maketrashdir();
+    maketmpdir();
 
     if (termsize()) {
         exit(EXIT_FAILURE);
@@ -867,8 +874,8 @@ int main(int argc, char** argv) {
         exit(EXIT_FAILURE);
     }
 
-    if (trashdir[0]) {
-        atexit(emptytrash);
+    if (tmpdir[0]) {
+        atexit(rmtmp);
     }
     atexit(resetterm);
 
@@ -925,7 +932,7 @@ int main(int argc, char** argv) {
     int _view = 0;
     struct view* view = views;
 
-    if (!trashdir[0]) {
+    if (!tmpdir[0]) {
         view->errorshown = true;
         view->eprefix = "Warning";
         view->emsg = "Trash dir not available";
@@ -1055,11 +1062,11 @@ int main(int argc, char** argv) {
                 break;
 #endif
             case 'u':
-                if (trashdir[0] && delstack != NULL) {
+                if (tmpdir[0] && delstack != NULL) {
                     int did = 0;
                     do {
                         did = delstack->massid;
-                        snprintf(tmpbuf, PATH_MAX, "%s/%d", trashdir, delstack->id);
+                        snprintf(tmpbuf, PATH_MAX, "%s/%d", tmpdir, delstack->id);
                         if (0 != rename(tmpbuf, delstack->original)) {
                             view->eprefix = "Error undoing";
                             view->emsg = strerror(errno);
@@ -1262,7 +1269,7 @@ int main(int argc, char** argv) {
                 if (pk != 'd') {
                     break;
                 }
-                if (trashdir[0]) {
+                if (tmpdir[0]) {
                     if (NULL == delstack) {
                         delstack = newdeleted(false);
                     } else {
@@ -1273,7 +1280,7 @@ int main(int argc, char** argv) {
 
                     snprintf(delstack->original, PATH_MAX, "%s/%s", view->wd, list[view->selection].name);
 
-                    snprintf(tmpbuf, PATH_MAX, "%s/%d", trashdir, delstack->id);
+                    snprintf(tmpbuf, PATH_MAX, "%s/%d", tmpdir, delstack->id);
                     if (0 != rename(delstack->original, tmpbuf)) {
                         view->eprefix = "Error deleting";
                         view->emsg = strerror(errno);
@@ -1312,7 +1319,7 @@ int main(int argc, char** argv) {
                 }
                 for (int i = 0; i < dcount; i++) {
                     if (list[i].marked) {
-                        if (trashdir[0]) {
+                        if (tmpdir[0]) {
                             if (NULL == delstack) {
                                 delstack = newdeleted(true);
                             } else {
@@ -1323,7 +1330,7 @@ int main(int argc, char** argv) {
 
                             snprintf(delstack->original, PATH_MAX, "%s/%s", view->wd, list[i].name);
 
-                            snprintf(tmpbuf, PATH_MAX, "%s/%d", trashdir, delstack->id);
+                            snprintf(tmpbuf, PATH_MAX, "%s/%d", tmpdir, delstack->id);
                             if (0 != rename(delstack->original, tmpbuf)) {
                                 view->eprefix = "Error deleting";
                                 view->emsg = strerror(errno);
@@ -1352,7 +1359,7 @@ int main(int argc, char** argv) {
                         }
                     }
                 }
-                if (trashdir[0]) {
+                if (tmpdir[0]) {
                     mdel_id++;
                 }
                 update = true;
@@ -1440,7 +1447,7 @@ int main(int argc, char** argv) {
                     //snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, bs);
                 } else if (hascut) {
                     snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, cutbuf);
-                    snprintf(tmpbuf2, PATH_MAX, "%s/%d", trashdir, cutid);
+                    snprintf(tmpbuf2, PATH_MAX, "%s/%d", tmpdir, cutid);
                     bool didpaste = true;
                     do {
                         if (!didpaste) {
@@ -1502,7 +1509,7 @@ outofloop:
                 if (tmpbuf[0]) {
                     snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, list[view->selection].name);
                     snprintf(cutbuf, NAME_MAX, "%s", list[view->selection].name);
-                    snprintf(tmpbuf2, PATH_MAX, "%s/%d", trashdir, (cutid = del_id++));
+                    snprintf(tmpbuf2, PATH_MAX, "%s/%d", tmpdir, (cutid = del_id++));
                     if (-1 == rename(tmpbuf, tmpbuf2)) {
                         view->eprefix = "Error";
                         view->emsg = strerror(errno);
@@ -1512,7 +1519,7 @@ outofloop:
                     }
                 } else {
                     view->eprefix = "Error";
-                    view->emsg = "No trash dir, cannot cut!";
+                    view->emsg = "No tmp dir, cannot cut!";
                     view->errorshown = true;
                 }
 #endif
