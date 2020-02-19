@@ -125,6 +125,22 @@ Undo the last deletion operation (does not work if
 was unable to create or access its trash directory, in which case deletion is permanent)
 
 .TP
+.BI X
+Cut the selected file or directory (can be pasted again with
+.BI p
+). Not available if the tmp directory is not available.
+
+.TP
+.BI yy
+Copy the selected file or directory (can be pasted again with
+.BI p
+)
+
+.TP
+.BI p
+Paste the previously cut or copied file or directory; shared between all views
+
+.TP
 .BI TAB
 Switches to the next view
 

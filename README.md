@@ -75,6 +75,9 @@ The functions of some keys may be dependent on values set in `config.h`.
 | <kbd>m</kbd> | Mark for deletion |
 | <kbd>D</kbd> | Delete marked files (does not touch unmarked files) |
 | <kbd>u</kbd> | Undo the last deletion operation (if cfm was unable to access/create its trash directory `~/.cfmtrash`, deletion is permanent and this will not work) |
+| <kbd>X</kbd> | Cut the current file or directory (to be pasted again with <kbd>p</kbd> |
+| <kbd>yy</kbd> | Copy the current file or directory (to be pasted again with <kbd>p</kbd> |
+| <kbd>p</kbd> | Paste the previously copied or cut file or directory |
 | <kbd>e</kbd> | Open file or directory in `EDITOR` |
 | <kbd>o</kbd> | Open file or directory in `OPENER` |
 | <kbd>S</kbd> | Spawns a `SHELL` in the current directory |
