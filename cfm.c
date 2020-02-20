@@ -174,7 +174,7 @@ static char* basename(const char* path) {
  */
 static int cpfile(const char* src, const char* dst) {
     char* b = basename(src);
-    if (b != NULL && (0 == strcmp(b, ".") || 0 == strcmp(b, ".."))) {
+    if (b && (0 == strcmp(b, ".") || 0 == strcmp(b, ".."))) {
         return 0;
     }
 
@@ -205,10 +205,7 @@ static int cpfile(const char* src, const char* dst) {
     }
 
     if (S_ISDIR(srcstat.st_mode)) {
-        DIR* d;
-        struct dirent *de;
         mode_t smask = umask(0);
-
         mode_t mode = srcstat.st_mode & ~smask;
         mode |= S_IRWXU;
         if (mkdir(dst, mode) < 0) {
@@ -217,12 +214,13 @@ static int cpfile(const char* src, const char* dst) {
         }
         umask(smask);
 
-        d = opendir(src);
+        DIR* d = opendir(src);
         if (d == NULL) {
             s = -1;
             goto preserve;
         }
 
+        struct dirent* de;
         while ((de = readdir(d)) != NULL) {
             char *ns = malloc(PATH_MAX);
             if (ns == NULL) {
@@ -241,8 +239,8 @@ static int cpfile(const char* src, const char* dst) {
                 s = -1;
             }
 
-            free(ns);
-            free(nd);
+            if (ns) free(ns);
+            if (nd) free(nd);
         }
 
         closedir(d);
@@ -336,17 +334,17 @@ notreg:
     }
 
 preserve:;
-    // preserve mode, owner, attributes, etc. here
-    struct timeval t[2];
-    t[1].tv_sec = t[0].tv_sec = srcstat.st_mtime;
-    t[1].tv_usec = t[0].tv_usec = 0;
+         // preserve mode, owner, attributes, etc. here
+         struct timeval t[2];
+         t[1].tv_sec = t[0].tv_sec = srcstat.st_mtime;
+         t[1].tv_usec = t[0].tv_usec = 0;
 
-    // we will fail silently if any of these don't work
-    utimes(dst, t);
-    chown(dst, srcstat.st_uid, srcstat.st_gid);
-    chmod(dst, srcstat.st_mode);
+         // we will fail silently if any of these don't work
+         utimes(dst, t);
+         chown(dst, srcstat.st_uid, srcstat.st_gid);
+         chmod(dst, srcstat.st_mode);
 
-    return s;
+         return s;
 }
 
 static struct deletedfile* newdeleted(bool mass) {
@@ -768,7 +766,7 @@ static int readfname(char* out, const char* initialstr) {
                 if (nl != NULL) {
                     *nl = '\0';
                 }
-                
+
                 rval = 0;
 
                 // validate the string
@@ -777,9 +775,9 @@ static int readfname(char* out, const char* initialstr) {
                 for (char* x = out; *x; x++) {
                     if (!(isalnum(*x) || *x == '.' || *x == '_' || *x == '-'
 #if ALLOW_SPACES
-                        || *x == ' '
+                                || *x == ' '
 #endif
-                        )) {
+                         )) {
                         rval = -3;
                         out[0] = '\0';
                         break;
@@ -1363,6 +1361,75 @@ int main(int argc, char** argv) {
                 }
                 update = true;
                 break;
+            case 'p':
+                if (hasyanked) {
+                    strncpy(tmpbuf, yankbuf, PATH_MAX);
+                    snprintf(tmpbuf2, PATH_MAX, "%s/%s", view->wd, basename(yankbuf));
+                } else if (hascut) {
+                    snprintf(tmpbuf, PATH_MAX, "%s/%d", tmpdir, cutid);
+                    snprintf(tmpbuf2, PATH_MAX, "%s/%s", view->wd, cutbuf);
+                }
+                bool didpaste = true;
+                do {
+                    if (!didpaste) {
+                        if (hasyanked) {
+                            status = readfname(tmpnam, basename(yankbuf));
+                        } else if (hascut) {
+                            status = readfname(tmpnam, cutbuf);
+                        }
+                        switch (status) {
+                            case -1:
+                                view->eprefix = "Error";
+                                view->emsg = "No editor available";
+                                view->errorshown = true;
+                                break;
+                            case -2:
+                                if (tmpnam[0] == '\0') {
+                                    view->eprefix = "Error";
+                                    view->emsg = strerror(errno);
+                                    view->errorshown = true;
+                                } else {
+                                    view->eprefix = "Warning";
+                                    view->emsg = strerror(errno);
+                                    view->errorshown = true;
+                                    status = 0;
+                                }
+                                break;
+                            case -3:
+                                view->eprefix = "Error";
+                                view->emsg = "Invalid file name";
+                                view->errorshown = true;
+                                break;
+                        }
+
+                        if (status == 0) {
+                            snprintf(tmpbuf2, PATH_MAX, "%s/%s", view->wd, tmpnam);
+                        } else {
+                            goto outofloop;
+                        }
+                    }
+                    FILE* f = fopen(tmpbuf2, "r");
+                    if (!f) {
+                        if (errno == ENOENT) {
+                            if (0 != cpfile(tmpbuf, tmpbuf2)) {
+                                view->eprefix = "Error";
+                                view->emsg = "Could not copy files";
+                                view->errorshown = true;
+                            }
+                            didpaste = true;
+                        } else {
+                            view->eprefix = "Error";
+                            view->emsg = strerror(errno);
+                            view->errorshown = true;
+                        }
+                    } else {
+                        fclose(f);
+                        didpaste = false;
+                    }
+                } while (!didpaste);
+outofloop:
+                update = true;
+                break;
         }
 
         if (!dcount) {
@@ -1638,75 +1705,6 @@ int main(int argc, char** argv) {
                 }
                 snprintf(yankbuf, PATH_MAX, "%s/%s", view->wd, list[view->selection].name);
                 hasyanked = true;
-                break;
-            case 'p':
-                if (hasyanked) {
-                    strncpy(tmpbuf, yankbuf, PATH_MAX);
-                    snprintf(tmpbuf2, PATH_MAX, "%s/%s", view->wd, basename(yankbuf));
-                } else if (hascut) {
-                    snprintf(tmpbuf, PATH_MAX, "%s/%d", tmpdir, cutid);
-                    snprintf(tmpbuf2, PATH_MAX, "%s/%s", view->wd, cutbuf);
-                }
-                bool didpaste = true;
-                do {
-                    if (!didpaste) {
-                        if (hasyanked) {
-                            status = readfname(tmpnam, basename(yankbuf));
-                        } else if (hascut) {
-                            status = readfname(tmpnam, cutbuf);
-                        }
-                        switch (status) {
-                            case -1:
-                                view->eprefix = "Error";
-                                view->emsg = "No editor available";
-                                view->errorshown = true;
-                                break;
-                            case -2:
-                                if (tmpnam[0] == '\0') {
-                                    view->eprefix = "Error";
-                                    view->emsg = strerror(errno);
-                                    view->errorshown = true;
-                                } else {
-                                    view->eprefix = "Warning";
-                                    view->emsg = strerror(errno);
-                                    view->errorshown = true;
-                                    status = 0;
-                                }
-                                break;
-                            case -3:
-                                view->eprefix = "Error";
-                                view->emsg = "Invalid file name";
-                                view->errorshown = true;
-                                break;
-                        }
-                        
-                        if (status == 0) {
-                            snprintf(tmpbuf2, PATH_MAX, "%s/%s", view->wd, tmpnam);
-                        } else {
-                            goto outofloop;
-                        }
-                    }
-                    FILE* f = fopen(tmpbuf2, "r");
-                    if (!f) {
-                        if (errno == ENOENT) {
-                            if (0 != cpfile(tmpbuf, tmpbuf2)) {
-                                view->eprefix = "Error";
-                                view->emsg = "Could not copy files";
-                                view->errorshown = true;
-                            }
-                            didpaste = true;
-                        } else {
-                            view->eprefix = "Error";
-                            view->emsg = strerror(errno);
-                            view->errorshown = true;
-                        }
-                    } else {
-                        fclose(f);
-                        didpaste = false;
-                    }
-                } while (!didpaste);
-outofloop:
-                update = true;
                 break;
             case 'X':
                 if (tmpbuf[0]) {
