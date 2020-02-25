@@ -156,6 +156,25 @@ static int deldir(const char* dir) {
 }
 
 /*
+ * If the path pointed to by f is a file, unlinks the file.
+ * Else, deletes the directory.
+ *
+ * Returns 0 on success.
+ */
+static int del(const char* f) {
+    struct stat fst;
+    if (0 != lstat(f, &fst)) {
+        return -1;
+    }
+
+    if (S_ISDIR(fst.st_mode)) {
+        return deldir(f);
+    } else {
+        return unlink(f);
+    }
+}
+
+/*
  * Get the base name of a file.
  * This is the same thing as running `basename x/y/z` at
  * the command line.
