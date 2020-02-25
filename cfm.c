@@ -1597,13 +1597,29 @@ outofloop:
                             snprintf(delstack->original, PATH_MAX, "%s/%s", view->wd, list[i].name);
 
                             snprintf(tmpbuf, PATH_MAX, "%s/%d", tmpdir, delstack->id);
-                            if (0 != rename(delstack->original, tmpbuf)) {
-                                view->eprefix = "Error deleting";
+                            if (0 != cpfile(delstack->original, tmpbuf)) {
+                                view->eprefix = "Error copying for deletion";
                                 view->emsg = strerror(errno);
                                 view->errorshown = true;
                                 delstack = freedeleted(delstack);
                             } else {
-                                view->marks--;
+                                if (E_DIR(list[view->selection].type)) {
+                                    if (0 != deldir(delstack->original)) {
+                                        view->eprefix = "Error deleting";
+                                        view->emsg = strerror(errno);
+                                        view->errorshown = true;
+                                        delstack = freedeleted(delstack);
+                                    }
+                                } else {
+                                    if (0 != unlink(delstack->original)) {
+                                        view->eprefix = "Error deleting";
+                                        view->emsg = strerror(errno);
+                                        view->errorshown = true;
+                                        delstack = freedeleted(delstack);
+                                    } else {
+                                        view->marks--;
+                                    }
+                                }
                             }
                         } else {
                             snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, list[i].name);
