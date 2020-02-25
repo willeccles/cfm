@@ -1264,11 +1264,13 @@ int main(int argc, char** argv) {
                     do {
                         did = delstack->massid;
                         snprintf(tmpbuf, PATH_MAX, "%s/%d", tmpdir, delstack->id);
-                        if (0 != rename(tmpbuf, delstack->original)) {
+                        if (0 != cpfile(tmpbuf, delstack->original)) {
                             view->eprefix = "Error undoing";
                             view->emsg = strerror(errno);
                             view->errorshown = true;
                         } else {
+                            // fail silently here
+                            unlink(tmpbuf);
                             delstack = freedeleted(delstack);
                         }
                     } while (delstack && delstack->mass && delstack->massid == did);
