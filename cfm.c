@@ -144,6 +144,79 @@ static char tmpdir[PATH_MAX];
 static atomic_bool interactive = true;
 
 /*
+ * Hash table for files created by the copy function.
+ * The source for this was heavily inspired by libbb since I am too
+ * lazy to make my own entirely from scratch.
+ */
+#define HASH_SIZE 311U // prime number
+#define hashfn(ino) ((unsigned)(ino) % HASH_SIZE)
+
+struct hashed_file {
+    ino_t ino;
+    dev_t dev;
+    struct hashed_file* next;
+    bool isdir;
+};
+
+static struct hashed_file** file_table;
+
+/*
+ * Returns whether or not a file is in the hash table.
+ */
+static bool is_file_hashed(const struct stat* st) {
+    if (!file_table) {
+        return false;
+    }
+    struct hashed_file* elem = file_table[hashfn(st->st_ino)];
+    while (elem != NULL) {
+        if (elem->ino == st->st_ino
+            && elem->dev == st->st_dev
+            && elem->isdir == !!S_ISDIR(st->st_mode)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/*
+ * Hashes a file and adds it to the hash table.
+ */
+static void add_file_hash(const struct stat* st) {
+    struct hashed_file* elem = malloc(sizeof(struct hashed_file));
+    elem->ino = st->st_ino;
+    elem->dev = st->st_dev;
+    elem->isdir = !!S_ISDIR(st->st_mode);
+    if (!file_table) {
+        file_table = calloc(HASH_SIZE, sizeof(*file_table));
+    }
+    int i = hashfn(st->st_ino);
+    elem->next = file_table[i];
+    file_table[i] = elem;
+}
+
+/*
+ * Cleans up the file table.
+ */
+static void reset_file_table(void) {
+    if (!file_table) {
+        return;
+    }
+    
+    struct hashed_file* elem;
+    struct hashed_file* next;
+    for (size_t i = 0; i < HASH_SIZE; i++) {
+        elem = file_table[i];
+        while (elem != NULL) {
+            next = elem->next;
+            free(elem);
+            elem = next;
+        }
+    }
+    free(file_table);
+    file_table = NULL;
+}
+
+/*
  * Unlinks a file. Used for deldir.
  */
 static int rmFiles(const char *pathname, const struct stat *sbuf, int type, struct FTW *ftwb) {
@@ -207,10 +280,11 @@ static char* basename(const char* path) {
 }
 
 /*
+ * This is the internal portion. Use the cpfile function instead.
  * Copy file or directory recursively.
  * Returns 0 on success, -1 on error.
  */
-static int cpfile(const char* src, const char* dst) {
+static int cpfile_inner(const char* src, const char* dst) {
     char* b = basename(src);
     if (b && (0 == strcmp(b, ".") || 0 == strcmp(b, ".."))) {
         return 0;
@@ -223,6 +297,11 @@ static int cpfile(const char* src, const char* dst) {
     if (lstat(src, &srcstat) < 0) {
         // couldn't stat source
         return -1;
+    }
+
+    // if we already created this file we don't want to create it again
+    if (is_file_hashed(&srcstat)) {
+        return 0;
     }
 
     if (lstat(dst, &dststat) < 0) {
@@ -252,6 +331,12 @@ static int cpfile(const char* src, const char* dst) {
         }
         umask(smask);
 
+        struct stat newst;
+        if (lstat(dst, &newst) < 0) {
+            return -1;
+        }
+        add_file_hash(&newst);
+
         DIR* d = opendir(src);
         if (d == NULL) {
             s = -1;
@@ -273,7 +358,7 @@ static int cpfile(const char* src, const char* dst) {
 
             snprintf(ns, PATH_MAX, "%s/%s", src, de->d_name);
             snprintf(nd, PATH_MAX, "%s/%s", dst, de->d_name);
-            if (cpfile(ns, nd) != 0) {
+            if (cpfile_inner(ns, nd) != 0) {
                 s = -1;
             }
 
@@ -295,7 +380,6 @@ static int cpfile(const char* src, const char* dst) {
             goto notreg;
         }
 
-        // TODO it may make more sense to use openat + an fd for the directory
         sfd = open(src, O_RDONLY);
         if (sfd == -1) {
             return -1;
@@ -311,6 +395,13 @@ static int cpfile(const char* src, const char* dst) {
             close(sfd);
             return -1;
         }
+
+        struct stat newst;
+        if (fstat(dfd, &newst) < 0) {
+            close(dfd);
+            return -1;
+        }
+        add_file_hash(&newst);
 
         // copy the file
         char cbuf[4096] = {0};
@@ -379,10 +470,19 @@ preserve:;
 
          // we will fail silently if any of these don't work
          utimes(dst, t);
-         (void)chown(dst, srcstat.st_uid, srcstat.st_gid);
+         chown(dst, srcstat.st_uid, srcstat.st_gid);
          chmod(dst, srcstat.st_mode);
 
          return s;
+}
+
+/*
+ * Copies a file or directory. Returns 0 on success and -1 on failure.
+ */
+static int cpfile(const char* src, const char* dst) {
+    int s = cpfile_inner(src, dst);
+    reset_file_table();
+    return s;
 }
 
 static struct deletedfile* newdeleted(bool mass) {
@@ -483,7 +583,7 @@ static __attribute__((unused)) char* gethome(char* out, size_t len) {
 /*
  * Get editor.
  */
-static void geteditor() {
+static void geteditor(void) {
 #ifdef EDITOR
     strncpy(editor, EDITOR, PATH_MAX);
 #else
@@ -504,7 +604,7 @@ static void geteditor() {
 /*
  * Get shell.
  */
-static void getshell() {
+static void getshell(void) {
 #ifdef SHELL
     strncpy(shell, SHELL, PATH_MAX);
 #else
@@ -525,7 +625,7 @@ static void getshell() {
 /*
  * Get the opener program.
  */
-static void getopener() {
+static void getopener(void) {
 #ifdef OPENER
     strncpy(opener, OPENER, PATH_MAX);
 #else
@@ -546,7 +646,7 @@ static void getopener() {
 /*
  * Get the tmp directory.
  */
-static void maketmpdir() {
+static void maketmpdir(void) {
 #ifdef TMP_DIR
     strncpy(tmpdir, TMP_DIR, PATH_MAX);
 #else
@@ -566,7 +666,7 @@ static void maketmpdir() {
     }
 }
 
-static void rmtmp() {
+static void rmtmp(void) {
     if (tmpdir[0]) {
         if (0 != deldir(tmpdir)) {
             perror("deldir: ~/.cfmtmp");
@@ -578,7 +678,7 @@ static void rmtmp() {
  * Save the default terminal settings.
  * Returns 0 on success.
  */
-static int backupterm() {
+static int backupterm(void) {
     if (!interactive) return 0;
     if (tcgetattr(STDIN_FILENO, &old_term) < 0) {
         perror("tcgetattr");
@@ -591,7 +691,7 @@ static int backupterm() {
  * Get the size of the terminal.
  * Returns 0 on success.
  */
-static int termsize() {
+static int termsize(void) {
     if (!interactive) return 0;
     struct winsize ws;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) < 0) {
@@ -609,7 +709,7 @@ static int termsize() {
  * Sets up the terminal for TUI.
  * Return 0 on success.
  */
-static int setupterm() {
+static int setupterm(void) {
     if (!interactive) return 0;
 
     setvbuf(stdout, NULL, _IOFBF, 0);
@@ -637,7 +737,7 @@ static int setupterm() {
 /*
  * Resets the terminal to how it was before we ruined it.
  */
-static void resetterm() {
+static void resetterm(void) {
     if (!interactive) return;
 
     setvbuf(stdout, NULL, _IOLBF, 0);
@@ -842,7 +942,7 @@ static int readfname(char* out, const char* initialstr) {
  * Get a key. Wraps getchar() and returns hjkl instead of arrow keys.
  * Also, returns 
  */
-static int getkey() {
+static int getkey(void) {
     char c[3];
 
     if (!interactive) {
@@ -1493,14 +1593,6 @@ int main(int argc, char** argv) {
                 } while (!didpaste);
 outofloop:
                 update = true;
-                break;
-            case EOF:
-                if (!interactive) {
-                    exit(EXIT_SUCCESS);
-                } else {
-                    fputs("EOF received from stdin\n", stderr);
-                    exit(EXIT_FAILURE);
-                }
                 break;
         }
 
