@@ -379,7 +379,7 @@ preserve:;
 
          // we will fail silently if any of these don't work
          utimes(dst, t);
-         chown(dst, srcstat.st_uid, srcstat.st_gid);
+         (void)chown(dst, srcstat.st_uid, srcstat.st_gid);
          chmod(dst, srcstat.st_mode);
 
          return s;
