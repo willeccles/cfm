@@ -55,6 +55,14 @@ At the moment, cfm is available from the following sources:
 - [KISS](https://github.com/kisslinux/community/tree/master/community/cfm) - Maintained by me (Will Eccles)
 - [AUR](https://aur.archlinux.org/packages/cfm/) - Maintained by Hawkeye0021
 
+## Bugs
+
+At the moment, the main bug is that copying a directory into itself (i.e. doing
+the sequence <kbd>yy</kbd><kbd>l</kbd><kbd>p</kbd> on a directory) will cause a
+huge amount of recursion and you will end up with a huge file tree.
+
+Workaround: Don't do that.
+
 ## Usage
 
 The functions of some keys may be dependent on values set in `config.h`.
@@ -90,7 +98,7 @@ The functions of some keys may be dependent on values set in `config.h`.
 
 ---
 
-<a class="anchor" id="1"></a><sup>1</sup> The arrow keys work the same as HJKL.
+<a class="anchor" id="1"></a><sup>1</sup> The arrow keys work the same as <kbd>H</kbd><kbd>J</kbd>K</kbd><kbd>L</kbd>.
 
 <a class="anchor" id="2"></a><sup>2</sup> The available characters for filenames are `A-Za-z
 ._-` by default, which is POSIX "fully portable filenames" plus spaces. If
