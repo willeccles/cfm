@@ -101,8 +101,33 @@ The functions of some keys may be dependent on values set in `config.h`.
 ---
 
 <a class="anchor" id="1"></a><sup>1</sup> The arrow keys work the same as
-<kbd>H</kbd><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd>.
+<kbd>h</kbd><kbd>j</kbd><kbd>k</kbd><kbd>l</kbd>.
 
 <a class="anchor" id="2"></a><sup>2</sup> The available characters for filenames are `A-Za-z
 ._-` by default, which is POSIX "fully portable filenames" plus spaces. If
 you wish, you can disable spaces by setting `ALLOW_SPACES` to 0.
+
+## Scripting
+
+If `stdin` or `stdout` are not attached to a TTY, cfm will read commands from
+`stdin` until either EOF is reached or it does not read any more data. This can
+be used to script operations. All errors will be printed to `stderr` and are
+fatal. In scripting mode, cfm will never draw to the screen.
+
+Example:
+
+```
+$ cat script.txt
+jjljjjkyyhp
+$ cfm <script.txt
+```
+
+This example is equivalent to performing the following operations in a normal
+cfm instance:
+
+1. Go down twice with <kbd>j</kbd>
+2. Go into the currently selected directory with <kbd>l</kbd>
+3. Go down three times with <kbd>j</kbd> and up once with <kbd>k</kbd>
+4. Yank the current file with <kbd>yy</kbd>
+5. Go back to the parent directory with <kbd>h</kbd>
+6. Paste the yanked file with <kbd>p</kbd>

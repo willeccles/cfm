@@ -188,6 +188,13 @@ body{margin:40px auto;max-width:700px;line-height:1.6;font-size:18px;color:#444;
             </tr>
         </table>
         </p>
+        <h2>Scripting</h2>
+        <p>If either <var>STDIN</var> or <var>STDOUT</var> is not attached to a
+        TTY, cfm will run in non-interactive mode, reading commands from
+        <var>STDIN</var> until either EOF or no more input is found. This can
+        be used to write simple scripts. In scripting mode, cfm does not ever
+        draw the screen and any errors are written to <var>STDERR</var> and are
+        fatal.</p>
         <h2>License</h2>
         <p>Cactus File Manager (cfm) is released by Will Eccles under the Mozilla Public License version 2.0. For details, see the LICENSE file distributed with the source code.</p>
     </body>

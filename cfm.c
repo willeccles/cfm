@@ -141,6 +141,8 @@ static char opener[PATH_MAX];
 static char shell[PATH_MAX];
 static char tmpdir[PATH_MAX];
 
+static atomic_bool interactive = true;
+
 /*
  * Unlinks a file. Used for deldir.
  */
@@ -577,6 +579,7 @@ static void rmtmp() {
  * Returns 0 on success.
  */
 static int backupterm() {
+    if (!interactive) return 0;
     if (tcgetattr(STDIN_FILENO, &old_term) < 0) {
         perror("tcgetattr");
         return 1;
@@ -589,6 +592,7 @@ static int backupterm() {
  * Returns 0 on success.
  */
 static int termsize() {
+    if (!interactive) return 0;
     struct winsize ws;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) < 0) {
         perror("ioctl");
@@ -606,6 +610,8 @@ static int termsize() {
  * Return 0 on success.
  */
 static int setupterm() {
+    if (!interactive) return 0;
+
     setvbuf(stdout, NULL, _IOFBF, 0);
 
     struct termios new_term = old_term;
@@ -632,6 +638,8 @@ static int setupterm() {
  * Resets the terminal to how it was before we ruined it.
  */
 static void resetterm() {
+    if (!interactive) return;
+
     setvbuf(stdout, NULL, _IOLBF, 0);
 
     if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &old_term) < 0) {
@@ -837,6 +845,14 @@ static int readfname(char* out, const char* initialstr) {
 static int getkey() {
     char c[3];
 
+    if (!interactive) {
+        ssize_t n = read(STDIN_FILENO, c, 1);
+        if (n == 0) {
+            return 'q';
+        }
+        return *c;
+    }
+
     ssize_t n = read(STDIN_FILENO, c, 3);
     if (n <= 0) {
         return -1;
@@ -864,6 +880,7 @@ static int getkey() {
  * Draws one element to the screen.
  */
 static void drawentry(struct listelem* e, bool selected) {
+    if (!interactive) return;
     printf("\033[2K"); // clear line
 
 #if BOLD_POINTER
@@ -951,6 +968,7 @@ static void drawentry(struct listelem* e, bool selected) {
  * Draws the status line at the bottom of the screen.
  */
 static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m, size_t p) {
+    if (!interactive) return;
     printf("\033[%d;H" // go to the bottom row
             "\033[2K" // clear the row
             "\033[37;7;1m", // inverse + bold
@@ -973,6 +991,13 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m, siz
  * Draws the statusline with an error message in it.
  */
 static void drawstatuslineerror(const char* prefix, const char* error, size_t p) {
+    if (!interactive) {
+        // instead print to stderr
+        fprintf(stderr, "%s: %s\n", prefix, error);
+        exit(EXIT_FAILURE);
+        return;
+    }
+
     printf("\033[%d;H"
             "\033[2K"
             "\033[31;7;1m",
@@ -989,6 +1014,7 @@ static void drawstatuslineerror(const char* prefix, const char* error, size_t p)
  * Use sparingly.
  */
 static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o, size_t m, int v) {
+    if (!interactive) return;
     // go to the top and print the info bar
     printf("\033[2J" // clear
             "\033[H" // top left
@@ -1050,8 +1076,7 @@ static void sigresize(int UNUSED(sig)) {
 
 int main(int argc, char** argv) {
     if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO)) {
-        fprintf(stderr, "isatty: not connected to a tty\n");
-        exit(EXIT_FAILURE);
+        interactive = false;
     }
 
     char* wd = malloc(PATH_MAX);
@@ -1220,7 +1245,7 @@ int main(int argc, char** argv) {
             redraw = true;
         }
 
-        if (redraw) {
+        if (redraw && interactive) {
             redraw = false;
             if (termsize()) {
                 exit(EXIT_FAILURE);
@@ -1468,6 +1493,14 @@ int main(int argc, char** argv) {
                 } while (!didpaste);
 outofloop:
                 update = true;
+                break;
+            case EOF:
+                if (!interactive) {
+                    exit(EXIT_SUCCESS);
+                } else {
+                    fputs("EOF received from stdin\n", stderr);
+                    exit(EXIT_FAILURE);
+                }
                 break;
         }
 

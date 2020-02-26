@@ -157,6 +157,12 @@ Switches to view N, up to the number specified by \fIVIEW_COUNT\fR (2 by default
 Quit
 .B cfm
 
+.SH SCRIPTING
+If stdin or stdout are not attached to a TTY,
+.B cfm
+will read commands from stdin and quit at EOF, skipping all drawing.
+Any errors will be printed to stderr.
+
 .SH AUTHOR
 Will Eccles <will@eccles.dev>.
 For more information, see https://github.com/willeccles/cfm.
