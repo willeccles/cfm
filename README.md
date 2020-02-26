@@ -63,6 +63,8 @@ huge amount of recursion and you will end up with a huge file tree.
 
 Workaround: Don't do that.
 
+If you find a bug, please post an issue on GitHub.
+
 ## Usage
 
 The functions of some keys may be dependent on values set in `config.h`.
