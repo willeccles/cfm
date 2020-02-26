@@ -175,6 +175,23 @@ static int del(const char* f) {
 }
 
 /*
+ * Stats a file and returns 1 if it exists or 0 if
+ * it doesn't exist. It returns -1 if there was an error.
+ */
+static int exists(const char* path) {
+    struct stat fst;
+    if (0 != lstat(path, &fst)) {
+        if (errno == ENOENT) {
+            return 0;
+        } else {
+            return -1;
+        }
+    } else {
+        return 1;
+    }
+}
+
+/*
  * Get the base name of a file.
  * This is the same thing as running `basename x/y/z` at
  * the command line.
@@ -1325,6 +1342,9 @@ int main(int argc, char** argv) {
 
                 if (status == 0) {
                     snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, tmpnam);
+                    // use fopen instead of testing with 'exists' here because
+                    // this way the file will be created if the file doesn't
+                    // exist
                     FILE* f = fopen(tmpbuf, "wx");
                     if (!f) {
                         if (errno == EEXIST) {
@@ -1429,22 +1449,20 @@ int main(int argc, char** argv) {
                             goto outofloop;
                         }
                     }
-                    FILE* f = fopen(tmpbuf2, "r");
-                    if (!f) {
-                        if (errno == ENOENT) {
-                            if (0 != cpfile(tmpbuf, tmpbuf2)) {
-                                view->eprefix = "Error";
-                                view->emsg = "Could not copy files";
-                                view->errorshown = true;
-                            }
-                            didpaste = true;
-                        } else {
+                    int s = exists(tmpbuf2);
+                    if (s == 0) {
+                        if (0 != cpfile(tmpbuf, tmpbuf2)) {
                             view->eprefix = "Error";
-                            view->emsg = strerror(errno);
+                            view->emsg = "Could not copy files";
                             view->errorshown = true;
                         }
-                    } else {
-                        fclose(f);
+                        didpaste = true;
+                    } else if (s == -1) {
+                        view->eprefix = "Error";
+                        view->emsg = "Could not stat target file";
+                        view->errorshown = true;
+                        goto outofloop;
+                    } else if (s == 1) {
                         didpaste = false;
                     }
                 } while (!didpaste);
@@ -1580,21 +1598,13 @@ outofloop:
                     }
                 } else {
                     snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, list[view->selection].name);
-                    if (E_DIR(list[view->selection].type)) {
-                        if (0 != deldir(list[view->selection].name)) {
-                            view->eprefix = "Error deleting";
-                            view->emsg = strerror(errno);
-                            view->errorshown = true;
-                        }
+                    if (0 != del(tmpbuf)) {
+                        view->eprefix = "Error deleting";
+                        view->emsg = strerror(errno);
+                        view->errorshown = true;
                     } else {
-                        if (0 != unlink(tmpbuf)) {
-                            view->eprefix = "Error deleting";
-                            view->emsg = strerror(errno);
-                            view->errorshown = true;
-                        } else {
-                            if (list[view->selection].marked) {
-                                view->marks--;
-                            }
+                        if (list[view->selection].marked) {
+                            view->marks--;
                         }
                     }
                 }
@@ -1624,40 +1634,23 @@ outofloop:
                                 view->errorshown = true;
                                 delstack = freedeleted(delstack);
                             } else {
-                                if (E_DIR(list[view->selection].type)) {
-                                    if (0 != deldir(delstack->original)) {
-                                        view->eprefix = "Error deleting";
-                                        view->emsg = strerror(errno);
-                                        view->errorshown = true;
-                                        delstack = freedeleted(delstack);
-                                    }
+                                if (0 != del(delstack->original)) {
+                                    view->eprefix = "Error deleting";
+                                    view->emsg = strerror(errno);
+                                    view->errorshown = true;
+                                    delstack = freedeleted(delstack);
                                 } else {
-                                    if (0 != unlink(delstack->original)) {
-                                        view->eprefix = "Error deleting";
-                                        view->emsg = strerror(errno);
-                                        view->errorshown = true;
-                                        delstack = freedeleted(delstack);
-                                    } else {
-                                        view->marks--;
-                                    }
+                                    view->marks--;
                                 }
                             }
                         } else {
                             snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, list[i].name);
-                            if (E_DIR(list[view->selection].type)) {
-                                if (0 != deldir(list[view->selection].name)) {
-                                    view->eprefix = "Error deleting";
-                                    view->emsg = strerror(errno);
-                                    view->errorshown = true;
-                                }
+                            if (0 != del(tmpbuf)) {
+                                view->eprefix = "Error deleting";
+                                view->emsg = strerror(errno);
+                                view->errorshown = true;
                             } else {
-                                if (0 != unlink(tmpbuf)) {
-                                    view->eprefix = "Error deleting";
-                                    view->emsg = strerror(errno);
-                                    view->errorshown = true;
-                                } else {
-                                    view->marks--;
-                                }
+                                view->marks--;
                             }
                         }
                     }
@@ -1712,26 +1705,23 @@ outofloop:
 
                 if (status == 0) {
                     snprintf(tmpbuf, PATH_MAX, "%s/%s", view->wd, tmpnam);
-                    FILE* f = fopen(tmpbuf, "r");
-                    if (!f) {
-                        if (errno == ENOENT) {
-                            // the target file does not exist
-                            snprintf(tmpbuf2, PATH_MAX, "%s/%s", view->wd, list[view->selection].name);
-                            if (-1 == rename(tmpbuf2, tmpbuf)) {
-                                view->eprefix = "Error";
-                                view->emsg = strerror(errno);
-                                view->errorshown = true;
-                            }
-                        } else {
+                    int s = exists(tmpbuf);
+                    if (s == 1) {
+                        view->eprefix = "Error";
+                        view->emsg = "Target file already exists";
+                        view->errorshown = true;
+                    } else if (s == 0) {
+                        // the target file does not exist
+                        snprintf(tmpbuf2, PATH_MAX, "%s/%s", view->wd, list[view->selection].name);
+                        if (-1 == rename(tmpbuf2, tmpbuf)) {
                             view->eprefix = "Error";
                             view->emsg = strerror(errno);
                             view->errorshown = true;
                         }
-                    } else {
+                    } else if (s == -1) {
                         view->eprefix = "Error";
-                        view->emsg = "Target file already exists";
+                        view->emsg = strerror(errno);
                         view->errorshown = true;
-                        fclose(f);
                     }
                 }
                 update = true;
@@ -1753,17 +1743,13 @@ outofloop:
                         view->emsg = strerror(errno);
                         view->errorshown = true;
                     } else {
-                        if (list[view->selection].type == ELEM_DIR) {
-                            if (0 != deldir(tmpbuf)) {
-                                view->eprefix = "Error";
-                                view->emsg = "Couldn't delete original directory";
-                                view->errorshown = true;
-                            }
+                        if (0 != del(tmpbuf)) {
+                            view->eprefix = "Error";
+                            view->emsg = "Couldn't delete original file";
+                            view->errorshown = true;
                         } else {
-                            if (0 != unlink(tmpbuf)) {
-                                view->eprefix = "Error";
-                                view->emsg = "Couldn't delete original file";
-                                view->errorshown = true;
+                            if (list[view->selection].marked) {
+                                view->marks--;
                             }
                         }
                         hasyanked = false;
