@@ -57,13 +57,7 @@ At the moment, cfm is available from the following sources:
 
 ## Bugs
 
-At the moment, the main bug is that copying a directory into itself (i.e. doing
-the sequence <kbd>yy</kbd><kbd>l</kbd><kbd>p</kbd> on a directory) will cause a
-huge amount of recursion and you will end up with a huge file tree.
-
-Workaround: Don't do that.
-
-If you find a bug, please post an issue on GitHub.
+If you find a bug, please create an issue on GitHub.
 
 ## Usage
 
