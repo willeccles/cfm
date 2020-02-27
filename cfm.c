@@ -115,7 +115,7 @@ static const char* elemtypestrings[] = {
 
 struct listelem {
     enum elemtype type;
-    char name[NAME_MAX];
+    char name[NAME_MAX+1];
     bool marked;
 };
 
@@ -471,7 +471,7 @@ preserve:;
 
      // we will fail silently if any of these don't work
      utimes(dst, t);
-     chown(dst, srcstat.st_uid, srcstat.st_gid);
+     (void)chown(dst, srcstat.st_uid, srcstat.st_gid);
      chmod(dst, srcstat.st_mode);
 
      return s;
@@ -1302,10 +1302,10 @@ int main(int argc, char** argv) {
     char tmpbuf2[PATH_MAX+1];
     char tmpnam[NAME_MAX+1];
     char yankbuf[PATH_MAX+1];
+    char cutbuf[NAME_MAX+1];
     bool hasyanked = false;
     bool hascut = false;
     int cutid = -1;
-    char cutbuf[NAME_MAX+1];
     while (1&&1) {
         if (update) {
             update = false;
