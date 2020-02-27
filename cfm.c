@@ -1264,8 +1264,6 @@ int main(int argc, char** argv) {
         bool errorshown;
         size_t selection;
         size_t pos;
-        size_t lastsel;
-        size_t lastpos;
         size_t marks;
         struct savedpos* backstack;
     } views[VIEW_COUNT];
@@ -1276,8 +1274,6 @@ int main(int argc, char** argv) {
             .errorshown = false,
             .selection = 0,
             .pos = 0,
-            .lastsel = 0,
-            .lastpos = 0,
             .marks = 0,
             .backstack = NULL,
         };
@@ -1323,8 +1319,6 @@ int main(int argc, char** argv) {
                 view->errorshown = true;
                 view->eprefix = "Error";
                 view->emsg = strerror(errno);
-                //view->selection = view->lastsel;
-                //view->pos = view->lastpos;
                 if (view->backstack) {
                     view->pos = view->backstack->pos;
                     view->selection = view->backstack->sel;
@@ -1701,8 +1695,6 @@ outofloop:
                         strcat(view->wd, "/");
                     }
                     strncat(view->wd, list[view->selection].name, PATH_MAX - strlen(view->wd) - 2);
-                    view->lastsel = view->selection;
-                    view->lastpos = view->pos;
                     view->selection = 0;
                     view->pos = 0;
                     update = true;
@@ -1728,8 +1720,6 @@ outofloop:
                         strcat(view->wd, "/");
                     }
                     strncat(view->wd, list[view->selection].name, PATH_MAX - strlen(view->wd) - 2);
-                    view->lastsel = view->selection;
-                    view->lastpos = view->pos;
                     view->selection = 0;
                     view->pos = 0;
                     update = true;
