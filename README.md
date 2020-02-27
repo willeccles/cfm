@@ -50,10 +50,12 @@ into `/usr`, you can do `sudo make install PREFIX=/usr`.
 
 ### With a Package Manager
 
-At the moment, cfm is available from the following sources:
+At the moment, cfm is available from the following sources (not all maintained
+by me):
 
-- [KISS](https://github.com/kisslinux/community/tree/master/community/cfm) - Maintained by me (Will Eccles)
-- [AUR](https://aur.archlinux.org/packages/cfm/) - Maintained by Hawkeye0021
+- [AUR](https://aur.archlinux.org/packages/cfm/)
+- [MacPorts](https://ports.macports.org/port/cfm/)
+- [KISS](https://github.com/kisslinux/community/tree/master/community/cfm)
 
 ## Bugs
 
