@@ -5,7 +5,8 @@ DEFCONF = config.def.h
 MANPAGE = cfm.1
 PREFIX ?= /usr/local
 
-CFLAGS = -O3 -std=c11 -Wall -W -pedantic
+CFLAGS = -O3 -std=c11 -Wall -W -pedantic -Wno-unknown-warning-option\
+		 -Wno-unused-result -Wno-format-truncation -Wno-implicit-fallthrough
 CPPFLAGS = -D_XOPEN_SOURCE=700
 
 .PHONY: install uninstall clean

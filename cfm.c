@@ -1277,12 +1277,12 @@ int main(int argc, char** argv) {
     }
 
     for (int i = 0; i < VIEW_COUNT; i++) {
-        views[i].wd = malloc(PATH_MAX);
+        views[i].wd = malloc(PATH_MAX+1);
         if (!views[i].wd) {
             perror("malloc");
             exit(EXIT_FAILURE);
         }
-        strcpy(views[i].wd, wd);
+        strncpy(views[i].wd, wd, PATH_MAX);
     }
 
     free(wd);
@@ -1298,15 +1298,14 @@ int main(int argc, char** argv) {
     }
 
     int k = -1, pk = -1, status;
-    char tmpbuf[PATH_MAX];
-    char tmpbuf2[PATH_MAX];
-    char tmpnam[NAME_MAX];
-    char yankbuf[PATH_MAX];
-    //char putbuf[PATH_MAX];
+    char tmpbuf[PATH_MAX+1];
+    char tmpbuf2[PATH_MAX+1];
+    char tmpnam[NAME_MAX+1];
+    char yankbuf[PATH_MAX+1];
     bool hasyanked = false;
     bool hascut = false;
     int cutid = -1;
-    char cutbuf[NAME_MAX];
+    char cutbuf[NAME_MAX+1];
     while (1&&1) {
         if (update) {
             update = false;
