@@ -1706,6 +1706,11 @@ outofloop:
 #endif
             case 'o':
                 if (E_DIR(list[view->selection].type)) {
+                    struct savedpos* sp = malloc(sizeof(struct savedpos));
+                    sp->pos = view->pos;
+                    sp->sel = view->selection;
+                    sp->prev = view->backstack;
+                    view->backstack = sp;
                     if (view->wd[1] != '\0') {
                         strcat(view->wd, "/");
                     }
