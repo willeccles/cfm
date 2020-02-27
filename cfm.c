@@ -136,10 +136,10 @@ static struct termios old_term;
 static atomic_bool redraw = false;
 static int rows, cols;
 static int pointerwidth = 2;
-static char editor[PATH_MAX];
-static char opener[PATH_MAX];
-static char shell[PATH_MAX];
-static char tmpdir[PATH_MAX];
+static char editor[PATH_MAX+1];
+static char opener[PATH_MAX+1];
+static char shell[PATH_MAX+1];
+static char tmpdir[PATH_MAX+1];
 
 static atomic_bool interactive = true;
 
