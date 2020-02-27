@@ -1711,14 +1711,21 @@ outofloop:
                     snprintf(delstack->original, PATH_MAX, "%s/%s", view->wd, list[view->selection].name);
 
                     snprintf(tmpbuf, PATH_MAX, "%s/%d", tmpdir, delstack->id);
-                    if (0 != rename(delstack->original, tmpbuf)) {
+                    if (0 != cpfile(delstack->original, tmpbuf)) {
                         view->eprefix = "Error deleting";
                         view->emsg = strerror(errno);
                         view->errorshown = true;
                         delstack = freedeleted(delstack);
                     } else {
-                        if (list[view->selection].marked) {
-                            view->marks--;
+                        if (0 != del(delstack->original)) {
+                            view->eprefix = "Error deleting";
+                            view->emsg = strerror(errno);
+                            view->errorshown = true;
+                            delstack = freedeleted(delstack);
+                        } else {
+                            if (list[view->selection].marked) {
+                                view->marks--;
+                            }
                         }
                     }
                 } else {
