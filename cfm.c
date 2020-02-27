@@ -1305,11 +1305,12 @@ int main(int argc, char** argv) {
     }
 
     int k = -1, pk = -1, status;
-    char tmpbuf[PATH_MAX+1];
-    char tmpbuf2[PATH_MAX+1];
-    char tmpnam[NAME_MAX+1];
-    char yankbuf[PATH_MAX+1];
-    char cutbuf[NAME_MAX+1];
+    char tmpbuf[PATH_MAX+1] = {0};
+    char tmpbuf2[PATH_MAX+1] = {0};
+    char tmpnam[NAME_MAX+1] = {0};
+    char lastname[NAME_MAX+1] = {0};
+    char yankbuf[PATH_MAX+1] = {0};
+    char cutbuf[NAME_MAX+1] = {0};
     bool hasyanked = false;
     bool hascut = false;
     int cutid = -1;
@@ -1322,8 +1323,8 @@ int main(int argc, char** argv) {
                 view->errorshown = true;
                 view->eprefix = "Error";
                 view->emsg = strerror(errno);
-                view->selection = view->lastsel;
-                view->pos = view->lastpos;
+                //view->selection = view->lastsel;
+                //view->pos = view->lastpos;
                 if (view->backstack) {
                     view->pos = view->backstack->pos;
                     view->selection = view->backstack->sel;
@@ -1354,6 +1355,16 @@ int main(int argc, char** argv) {
                         }
                     }
                 }
+                if (view->pos == 0 && view->selection == 0 && lastname[0]) {
+                    for (size_t i = 0; i < newdcount; i++) {
+                        if (0 == strcmp(lastname, list[i].name)) {
+                            view->selection = i;
+                            view->pos = (i > (size_t)rows - 2) ? (size_t)rows/2 : i;
+                            break;
+                        }
+                    }
+                    lastname[0] = 0;
+                }
             }
             dcount = newdcount;
             redraw = true;
@@ -1375,21 +1386,23 @@ int main(int argc, char** argv) {
         k = getkey();
         switch(k) {
             case 'h':
-                if (parentdir(view->wd)) {
-                    view->errorshown = false;
-                    if (view->backstack) {
-                        view->pos = view->backstack->pos;
-                        view->selection = view->backstack->sel;
-                        struct savedpos* s = view->backstack;
-                        view->backstack = s->prev;
-                        free(s);
-                    } else {
-                        // TODO make this go to the location of the dir that
-                        // was just left
-                        view->pos = 0;
-                        view->selection = 0;
+                {
+                    char* bn = basename(view->wd);
+                    strncpy(lastname, bn, NAME_MAX);
+                    if (parentdir(view->wd)) {
+                        view->errorshown = false;
+                        if (view->backstack) {
+                            view->pos = view->backstack->pos;
+                            view->selection = view->backstack->sel;
+                            struct savedpos* s = view->backstack;
+                            view->backstack = s->prev;
+                            free(s);
+                        } else {
+                            view->pos = 0;
+                            view->selection = 0;
+                        }
+                        update = true;
                     }
-                    update = true;
                 }
                 break;
             case '\033':
