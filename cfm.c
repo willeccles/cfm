@@ -464,17 +464,17 @@ notreg:
     }
 
 preserve:;
-         // preserve mode, owner, attributes, etc. here
-         struct timeval t[2];
-         t[1].tv_sec = t[0].tv_sec = srcstat.st_mtime;
-         t[1].tv_usec = t[0].tv_usec = 0;
+     // preserve mode, owner, attributes, etc. here
+     struct timeval t[2];
+     t[1].tv_sec = t[0].tv_sec = srcstat.st_mtime;
+     t[1].tv_usec = t[0].tv_usec = 0;
 
-         // we will fail silently if any of these don't work
-         utimes(dst, t);
-         chown(dst, srcstat.st_uid, srcstat.st_gid);
-         chmod(dst, srcstat.st_mode);
+     // we will fail silently if any of these don't work
+     utimes(dst, t);
+     chown(dst, srcstat.st_uid, srcstat.st_gid);
+     chmod(dst, srcstat.st_mode);
 
-         return s;
+     return s;
 }
 
 /*
