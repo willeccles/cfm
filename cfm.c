@@ -132,6 +132,11 @@ struct deletedfile {
     struct deletedfile* prev;
 };
 
+struct savedpos {
+    size_t pos, sel;
+    struct savedpos* prev;
+};
+
 static struct termios old_term;
 static atomic_bool redraw = false;
 static int rows, cols;
@@ -1262,17 +1267,19 @@ int main(int argc, char** argv) {
         size_t lastsel;
         size_t lastpos;
         size_t marks;
+        struct savedpos* backstack;
     } views[VIEW_COUNT];
 
     for (int i = 0; i < VIEW_COUNT; i++) {
         views[i] = (struct view){
             .wd = NULL,
-                .errorshown = false,
-                .selection = 0,
-                .pos = 0,
-                .lastsel = 0,
-                .lastpos = 0,
-                .marks = 0,
+            .errorshown = false,
+            .selection = 0,
+            .pos = 0,
+            .lastsel = 0,
+            .lastpos = 0,
+            .marks = 0,
+            .backstack = NULL,
         };
     }
 
@@ -1317,7 +1324,14 @@ int main(int argc, char** argv) {
                 view->emsg = strerror(errno);
                 view->selection = view->lastsel;
                 view->pos = view->lastpos;
-                redraw = true;
+                if (view->backstack) {
+                    view->pos = view->backstack->pos;
+                    view->selection = view->backstack->sel;
+                    struct savedpos* s = view->backstack;
+                    view->backstack = s->prev;
+                    free(s);
+                }
+                update = true;
                 continue;
             }
             if (!newdcount) {
@@ -1363,8 +1377,18 @@ int main(int argc, char** argv) {
             case 'h':
                 if (parentdir(view->wd)) {
                     view->errorshown = false;
-                    view->pos = 0;
-                    view->selection = 0;
+                    if (view->backstack) {
+                        view->pos = view->backstack->pos;
+                        view->selection = view->backstack->sel;
+                        struct savedpos* s = view->backstack;
+                        view->backstack = s->prev;
+                        free(s);
+                    } else {
+                        // TODO make this go to the location of the dir that
+                        // was just left
+                        view->pos = 0;
+                        view->selection = 0;
+                    }
                     update = true;
                 }
                 break;
@@ -1655,6 +1679,11 @@ outofloop:
 #endif
             case 'l':
                 if (E_DIR(list[view->selection].type)) {
+                    struct savedpos* sp = malloc(sizeof(struct savedpos));
+                    sp->pos = view->pos;
+                    sp->sel = view->selection;
+                    sp->prev = view->backstack;
+                    view->backstack = sp;
                     if (view->wd[1] != '\0') {
                         strcat(view->wd, "/");
                     }
