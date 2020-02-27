@@ -38,13 +38,16 @@ cut/paste.
 
 ## Building
 
-`make`
+When building from source, you should get the source for the [latest
+release](https://github.com/WillEccles/cfm/releases) and then run `make` inside
+the extracted source.
 
 ## Installing
 
 ### From Source
 
-Use `sudo make install`. You can specify a `PREFIX` or `DESTDIR` like with many
+First, download the [latest release](https://github.com/WillEccles/cfm/releases)'s source.
+Then, use `sudo make install`. You can specify a `PREFIX` or `DESTDIR` like with many
 makefiles. By default, `PREFIX` is `/usr/local/`, but if you wish to install
 into `/usr`, you can do `sudo make install PREFIX=/usr`.
 
