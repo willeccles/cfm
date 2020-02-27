@@ -220,6 +220,7 @@ static void reset_file_table(void) {
  * Unlinks a file. Used for deldir.
  */
 static int rmFiles(const char *pathname, const struct stat *sbuf, int type, struct FTW *ftwb) {
+    (void)sbuf; (void)type; (void)ftwb;
     return remove(pathname);
 }
 
@@ -1327,7 +1328,7 @@ int main(int argc, char** argv) {
                 // lock to bottom if deleted file at top
                 if (newdcount < dcount) {
                     if (view->pos == 0 && view->selection > 0) {
-                        if (dcount - view->selection == rows - 2) {
+                        if (dcount - view->selection == (size_t)rows - 2) {
                             view->selection--;
                         }
                     }
@@ -1610,7 +1611,7 @@ outofloop:
                     view->selection++;
                     printf("\n");
                     drawentry(&(list[view->selection]), true);
-                    if (view->pos < rows - 3) {
+                    if (view->pos < (size_t)rows - 3) {
                         view->pos++;
                     }
                     drawstatusline(&(list[view->selection]), dcount, view->selection, view->marks, view->pos);
@@ -1642,7 +1643,7 @@ outofloop:
                 break;
             case 'G':
                 view->selection = dcount - 1;
-                if (dcount > rows - 2) {
+                if (dcount > (size_t)rows - 2) {
                     view->pos = rows - 3;
                 } else {
                     view->pos = view->selection;
@@ -1746,7 +1747,7 @@ outofloop:
                 if (!view->marks) {
                     break;
                 }
-                for (int i = 0; i < dcount; i++) {
+                for (size_t i = 0; i < dcount; i++) {
                     if (list[i].marked) {
                         if (tmpdir[0]) {
                             if (NULL == delstack) {
