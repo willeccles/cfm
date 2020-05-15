@@ -13,7 +13,7 @@ CPPFLAGS = -D_XOPEN_SOURCE=700
 all: $(TARGET)
 
 $(TARGET): $(CONF) $(SRC)
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(SRC) -o $@
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(SRC) -o $@
 
 $(CONF):
 	@cp -v $(DEFCONF) $(CONF)
