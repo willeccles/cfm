@@ -8,7 +8,7 @@ PREFIX ?= /usr/local
 CFLAGS += -O3 -std=c11 -Wall -W -pedantic
 CPPFLAGS += -D_XOPEN_SOURCE=700
 
-.PHONY: install uninstall clean
+.PHONY: all install uninstall clean
 
 all: $(TARGET)
 
