@@ -135,4 +135,14 @@
  */
 //#define ALLOW_SPACES 1
 
+/* CD_ON_CLOSE:
+ * If set to a file path, cfm can write its current working
+ * directory to a file on closing with Q (as opposed to q).
+ * If set to NULL, this feature will be disabled.
+ *
+ * Default: NULL
+ * Value: String
+ */
+//#define CD_ON_CLOSE NULL
+
 #endif

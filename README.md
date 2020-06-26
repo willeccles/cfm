@@ -71,6 +71,7 @@ The functions of some keys may be dependent on values set in `config.h`.
 | Key(s) | Function |
 | ------ | -------- |
 | <kbd>q</kbd>, <kbd>Esc</kbd> | Quit cfm |
+| <kbd>Q</kbd> | Quit cfm, saving its working directory to the file specified in `CD_ON_CLOSE`, if enabled. Disabled by default. |
 | <kbd>h</kbd> | Go up a directory[<sup>1</sup>](#1) |
 | <kbd>j</kbd> | Move down[<sup>1</sup>](#1) |
 | <kbd>k</kbd> | Move up[<sup>1</sup>](#1) |

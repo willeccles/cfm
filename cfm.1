@@ -38,124 +38,129 @@ will disable cut/paste and deletions will be permanent (no undo).
 .SH USAGE
 Note: arrow keys work the same as hjkl.
 .TP
-.BI "j k"
+.B "j k"
 Move up/down
 
 .TP
-.BI "h l"
+.B "h l"
 Move left/right
 
 .TP
-.BI gg
+.B gg
 Move to top
 
 .TP
-.BI G
+.B G
 Move to bottom
 
 .TP
-.BI l
+.B l
 Open file using \fIEDITOR\fR, or change into directory
 
 .TP
-.BI o
+.B o
 Open file or directory with \fIOPENER\fR
 
 .TP
-.BI RET
+.B RET
 Works like
-.BI o
+.B o
 if \fIENTER_OPENS\fR is enabled, else works like
-.BI l
+.B l
 
 .TP
-.BI .
+.B .
 Toggles visibility of dotfiles
 
 .TP
-.BI e
+.B e
 Open file or directory in \fIEDITOR\fR
 
 .TP
-.BI r
+.B r
 Reload directory
 
 .TP
-.BI S
+.B S
 Spawn a shell (defined by \fISHELL\fR) in a directory
 
 .TP
-.BI T
+.B T
 Create a new file, opening \fIEDITOR\fR to enter a filename
 
 .TP
-.BI M
+.B M
 Create a new directory, opening \fIEDITOR\fR to enter a directory name
 
 .TP
-.BI R
+.B R
 Rename a file by opening \fIEDITOR\fR to edit the filename
 
 Note: for
-.BI T
-,
-.BI M
-, and
-.BI R
-, the allowed characters default to POSIX "fully portable filename" standards
+.B T ,
+.B M ,
+and
+.BR R ,
+the allowed characters default to POSIX "fully portable filename" standards
 with the addition of spaces: \fI[A-Za-z0-9 ._-]\fR. Spaces can be disabled by
 setting \fIALLOW_SPACES\fR to 0 in \fIconfig.h\fR.
 
 .TP
-.BI dd
+.B dd
 Delete current selection (does not touch marked files)
 
 .TP
-.BI m
+.B m
 Toggle mark for deletion
 
 .TP
-.BI D
+.B D
 Delete all marked files (does not touch unmarked files)
 
 .TP
-.BI u
+.B u
 Undo the last deletion operation (does not work if
 .B cfm
 was unable to create or access its trash directory, in which case deletion is permanent)
 
 .TP
-.BI X
+.B X
 Cut the selected file or directory (can be pasted again with
-.BI p
-). Not available if the tmp directory is not available.
+.BR p ).
+Not available if the tmp directory is not available.
 
 .TP
-.BI yy
+.B yy
 Copy the selected file or directory (can be pasted again with
-.BI p
-)
+.BR p )
 
 .TP
-.BI p
+.B p
 Paste the previously cut or copied file or directory; shared between all views
 
 .TP
-.BI TAB
+.B TAB
 Switches to the next view
 
 .TP
-.BI `
+.B `
 Switches to the previous view
 
 .TP
-.BI "1\-0"
+.B "1\-0"
 Switches to view N, up to the number specified by \fIVIEW_COUNT\fR (2 by default)
 
 .TP
-.BI "q ESC"
+.B "q ESC"
 Quit
-.B cfm
+.BR cfm
+
+.TP
+.B Q
+Quit
+.BR cfm ,
+saving its working directory to the file specified in \fICD_ON_CLOSE\fR, if
+enabled. Disabled by default.
 
 .SH SCRIPTING
 If stdin or stdout are not attached to a TTY,

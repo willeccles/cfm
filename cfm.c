@@ -95,6 +95,10 @@
 # define VIEW_COUNT 2
 #endif
 
+#ifndef CD_ON_CLOSE
+# define CD_ON_CLOSE NULL
+#endif
+
 #define COPYFLAGS (COPYFILE_ALL | COPYFILE_EXCL | COPYFILE_NOFOLLOW | COPYFILE_RECURSIVE)
 
 enum elemtype {
@@ -681,6 +685,35 @@ static void rmtmp(void) {
 }
 
 /*
+ * Write current working directory to CD_ON_CLOSE file.
+ * Creates the file if it doesn't exist; does not report errors.
+ */
+static void cdonclose(const char* wd) {
+    if (CD_ON_CLOSE != NULL) {
+        char buf[PATH_MAX] = {0};
+        realpath(CD_ON_CLOSE, buf);
+        FILE* outfile = fopen(buf, "w");
+        if (outfile) {
+            fprintf(outfile, "%s\n", wd);
+            fclose(outfile);
+        }
+    }
+}
+
+/*
+ * Remove existing pwd file (CD_ON_CLOSE).
+ * Does not report errors.
+ */
+static void rmpwdfile() {
+    if (CD_ON_CLOSE != NULL) {
+        char buffet[PATH_MAX] = {0};
+        realpath(CD_ON_CLOSE, buffet);
+        // delete buffy
+        del(buffet);
+    }
+}
+
+/*
  * Save the default terminal settings.
  * Returns 0 on success.
  */
@@ -1205,6 +1238,7 @@ int main(int argc, char** argv) {
     getshell();
     getopener();
     maketmpdir();
+    rmpwdfile();
 
     if (termsize()) {
         exit(EXIT_FAILURE);
@@ -1401,6 +1435,10 @@ int main(int argc, char** argv) {
                 break;
             case '\033':
             case 'q':
+                exit(EXIT_SUCCESS);
+                break;
+            case 'Q':
+                cdonclose(view->wd);
                 exit(EXIT_SUCCESS);
                 break;
             case '.':
