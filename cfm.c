@@ -1552,6 +1552,9 @@ int main(int argc, char** argv) {
                         }
                     } else {
                         fclose(f);
+                        strncpy(lastname, tmpnam, NAME_MAX);
+                        view->pos = 0;
+                        view->selection = 0;
                     }
                 }
                 update = true;
@@ -1924,6 +1927,11 @@ outofloop:
                             view->eprefix = "Error";
                             view->emsg = strerror(errno);
                             view->errorshown = true;
+                        } else {
+                            // go find the new file and select it
+                            strncpy(lastname, tmpnam, NAME_MAX);
+                            view->pos = 0;
+                            view->selection = 0;
                         }
                     } else if (s == -1) {
                         view->eprefix = "Error";
