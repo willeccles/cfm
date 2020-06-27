@@ -290,6 +290,30 @@ static char* basename(const char* path) {
 }
 
 /*
+ * Gets the working directory the same way as getcwd,
+ * but checks $PWD first. If it is valid, then it will be
+ * stored in buf, else getcwd will be called. This fixes
+ * paths with one or more symlinks in them.
+ *
+ * This is a *little bit* identical to the GNU extension,
+ * get_current_dir_name().
+ */
+static void getrealcwd(char* buf, size_t size) {
+    char* pwd;
+    pwd = getenv("PWD");
+    struct stat dotstat, pwdstat;
+    if (pwd != NULL
+        && stat(".", &dotstat) == 0
+        && stat(pwd, &pwdstat) == 0
+        && pwdstat.st_dev == dotstat.st_dev
+        && pwdstat.st_ino == dotstat.st_ino) {
+        strncpy(buf, pwd, size);
+    } else {
+        (void)getcwd(buf, size);
+    }
+}
+
+/*
  * This is the internal portion. Use the cpfile function instead.
  * Copy file or directory recursively.
  * Returns 0 on success, -1 on error.
@@ -1222,10 +1246,7 @@ int main(int argc, char** argv) {
     memset(wd, 0, PATH_MAX);
 
     if (argc == 1) {
-        if (NULL == getcwd(wd, PATH_MAX)) {
-            perror("getcwd");
-            exit(EXIT_FAILURE);
-        }
+        getrealcwd(wd, PATH_MAX);
     } else {
         if (NULL == realpath(argv[1], wd)) {
             exit(EXIT_FAILURE);
