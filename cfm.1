@@ -34,6 +34,12 @@ temp directory. If the variable is not set and \fICFM_TMP\fR was not set in
 directory cannot be created, then
 .B cfm
 will disable cut/paste and deletions will be permanent (no undo).
+If the \fICD_ON_CLOSE\fR option is not enabled at compile-time (default off),
+.B cfm
+will also check for the presence of the \fICFM_CD_ON_CLOSE\fR environment
+variable, which should contain the path to a file into which it can save its
+current working directory when quit with
+.BR Q .
 
 .SH USAGE
 Note: arrow keys work the same as hjkl.
@@ -160,7 +166,7 @@ Quit
 Quit
 .BR cfm ,
 saving its working directory to the file specified in \fICD_ON_CLOSE\fR, if
-enabled. Disabled by default.
+enabled, or the \fICFM_CD_ON_CLOSE\fR environment variable if not.
 
 .SH SCRIPTING
 If stdin or stdout are not attached to a TTY,

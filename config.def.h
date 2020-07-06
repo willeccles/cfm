@@ -140,9 +140,12 @@
  * directory to a file on closing with Q (as opposed to q).
  * If set to NULL, this feature will be disabled.
  *
- * Default: NULL
+ * If not set, cfm will attempt to use the file specified in
+ * the $CFM_CD_ON_CLOSE environment variable.
+ *
+ * Default: $CFM_CD_ON_CLOSE
  * Value: String
  */
-//#define CD_ON_CLOSE NULL
+//#define CD_ON_CLOSE "/tmp/cfmdir"
 
 #endif

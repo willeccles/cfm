@@ -95,10 +95,6 @@
 # define VIEW_COUNT 2
 #endif
 
-#ifndef CD_ON_CLOSE
-# define CD_ON_CLOSE NULL
-#endif
-
 #define COPYFLAGS (COPYFILE_ALL | COPYFILE_EXCL | COPYFILE_NOFOLLOW | COPYFILE_RECURSIVE)
 
 enum elemtype {
@@ -149,6 +145,7 @@ static char editor[PATH_MAX+1];
 static char opener[PATH_MAX+1];
 static char shell[PATH_MAX+1];
 static char tmpdir[PATH_MAX+1];
+static char cdonclosefile[PATH_MAX+1];
 
 static atomic_bool interactive = true;
 
@@ -713,10 +710,10 @@ static void rmtmp(void) {
  * Creates the file if it doesn't exist; does not report errors.
  */
 static void cdonclose(const char* wd) {
-    if (CD_ON_CLOSE != NULL) {
-        char buf[PATH_MAX] = {0};
-        realpath(CD_ON_CLOSE, buf);
-        FILE* outfile = fopen(buf, "w");
+    // since we assume that rmpwdfile() has already been called before this,
+    // cdonclosefile should have a valid path already if it's set
+    if (*cdonclosefile) {
+        FILE* outfile = fopen(cdonclosefile, "w");
         if (outfile) {
             fprintf(outfile, "%s\n", wd);
             fclose(outfile);
@@ -728,12 +725,21 @@ static void cdonclose(const char* wd) {
  * Remove existing pwd file (CD_ON_CLOSE).
  * Does not report errors.
  */
-static void rmpwdfile() {
-    if (CD_ON_CLOSE != NULL) {
-        char buffet[PATH_MAX] = {0};
-        realpath(CD_ON_CLOSE, buffet);
-        // delete buffy
-        del(buffet);
+static void rmpwdfile(void) {
+#ifdef CD_ON_CLOSE
+    if (NULL == realpath(CD_ON_CLOSE, cdonclosefile)) {
+        *cdonclosefile = 0;
+    }
+#else
+    const char* cdocf = getenv("CFM_CD_ON_CLOSE");
+    if (cdocf) {
+        if (NULL == realpath(cdocf, cdonclosefile)) {
+            *cdonclosefile = 0;
+        }
+    }
+#endif
+    if (*cdonclosefile) {
+        del(cdonclosefile);
     }
 }
 
