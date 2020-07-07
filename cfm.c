@@ -1141,16 +1141,14 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m, siz
             "\033[37;7;1m", // inverse + bold
             rows);
 
-    static char statusbuf[512] = {0};
-
+    int count;
     if (!m) {
-        snprintf(statusbuf, 512, " %zu/%zu", n ? s+1 : n, n);
+        printf(" %zu/%zu%n", n ? s+1 : n, n, &count);
     } else {
-        snprintf(statusbuf, 512, " %zu/%zu (%zu marked)", n ? s+1 : n, n, m);
+        printf(" %zu/%zu (%zu marked)%n", n ? s+1 : n, n, m, &count);
     }
-    printf("%s", statusbuf);
     // print the type of the file
-    printf("%*s \r", cols-(int)strlen(statusbuf)-1, elemtypestrings[l->type]);
+    printf("%*s \r", cols-count-1, elemtypestrings[l->type]);
     printf("\033[m\033[%zu;H", p+2); // move cursor back and reset formatting
 }
 
@@ -1169,10 +1167,9 @@ static void drawstatuslineerror(const char* prefix, const char* error, size_t p)
             "\033[2K"
             "\033[31;7;1m",
             rows);
-    static char errlinebuf[512] = {0};
-    snprintf(errlinebuf, 512, " %s: ", prefix);
-    printf("%s", errlinebuf);
-    printf("%-*s\r", cols-(int)strlen(errlinebuf)-1, error);
+    int count;
+    printf(" %s: %n", prefix, &count);
+    printf("%-*s \r", cols-count-1, error);
     printf("\033[m\033[%zu;H", p+2);
 }
 
@@ -1186,16 +1183,16 @@ static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t 
     printf("\033[2J" // clear
             "\033[H" // top left
             "\033[37;7;1m"); // style
-    static char barbuf[512] = {0};
+
+    int count;
 #if VIEW_COUNT > 1
-    snprintf(barbuf, 512, " %d: %s", v+1, wd);
+    printf(" %d: %s%n", v+1, wd, &count);
 #else
     (void)v;
-    snprintf(barbuf, 512, " %s", wd);
+    printf(" %s%n", wd, &count);
 #endif
-    printf("%s", barbuf);
 
-    printf("%-*s", (int)(cols - (int)strlen(barbuf)), (wd[1] == '\0') ? "" : "/");
+    printf("%-*s", (int)(cols - count), (wd[1] == '\0') ? "" : "/");
 
     printf("\033[m"); // reset formatting
 
