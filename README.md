@@ -34,7 +34,10 @@ cut/paste). If it's not set in `config.h`, then cfm will attempt to use the
 `$CFM_TMP` environment variable. If this is not set either, then `/tmp/cfmtmp`
 will be used. If a temporary directory is not specified in any way or it cannot
 create the directory it is attempting to use, cfm will disable undo and
-cut/paste.
+cut/paste. If `CD_ON_CLOSE` is not enabled at compile-time, cfm will look for
+the `$CFM_CD_ON_CLOSE` environment variable, which should contain the path to a
+file where cfm should write its current working directory when quit with
+<kbd>Q</kbd>.
 
 ## Building
 
@@ -85,8 +88,8 @@ The functions of some keys may be dependent on values set in `config.h`.
 | <kbd>m</kbd> | Mark for deletion |
 | <kbd>D</kbd> | Delete marked files (does not touch unmarked files) |
 | <kbd>u</kbd> | Undo the last deletion operation (if cfm was unable to access/create its trash directory `~/.cfmtrash`, deletion is permanent and this will not work) |
-| <kbd>X</kbd> | Cut the current file or directory (to be pasted again with <kbd>p</kbd> |
-| <kbd>yy</kbd> | Copy the current file or directory (to be pasted again with <kbd>p</kbd> |
+| <kbd>X</kbd> | Cut the current file or directory (to be pasted again with <kbd>p</kbd>) |
+| <kbd>yy</kbd> | Copy the current file or directory (to be pasted again with <kbd>p</kbd>) |
 | <kbd>p</kbd> | Paste the previously copied or cut file or directory |
 | <kbd>e</kbd> | Open file or directory in `EDITOR` |
 | <kbd>o</kbd> | Open file or directory in `OPENER` |
