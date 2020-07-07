@@ -732,10 +732,9 @@ static void rmpwdfile(void) {
     }
 #else
     const char* cdocf = getenv("CFM_CD_ON_CLOSE");
+    fprintf(stderr, "got here 1\n");
     if (cdocf) {
-        if (NULL == realpath(cdocf, cdonclosefile)) {
-            *cdonclosefile = 0;
-        }
+        strncpy(cdonclosefile, cdocf, PATH_MAX);
     }
 #endif
     if (*cdonclosefile) {
