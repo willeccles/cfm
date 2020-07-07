@@ -732,7 +732,6 @@ static void rmpwdfile(void) {
     }
 #else
     const char* cdocf = getenv("CFM_CD_ON_CLOSE");
-    fprintf(stderr, "got here 1\n");
     if (cdocf) {
         strncpy(cdonclosefile, cdocf, PATH_MAX);
     }
