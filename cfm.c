@@ -7,6 +7,8 @@
 
 #ifdef __APPLE__
 # define _DARWIN_C_SOURCE
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#define __BSD_VISIBLE 1
 #endif
 
 #include <ctype.h>
