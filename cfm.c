@@ -1145,9 +1145,9 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m, siz
 
     int count;
     if (!m) {
-        printf(" %zu/%zu%n", n ? s+1 : n, n, &count);
+        count = printf(" %zu/%zu", n ? s+1 : n, n);
     } else {
-        printf(" %zu/%zu (%zu marked)%n", n ? s+1 : n, n, m, &count);
+        count = printf(" %zu/%zu (%zu marked)", n ? s+1 : n, n, m);
     }
     // print the type of the file
     printf("%*s \r", cols-count-1, elemtypestrings[l->type]);
@@ -1169,8 +1169,7 @@ static void drawstatuslineerror(const char* prefix, const char* error, size_t p)
             "\033[2K"
             "\033[31;7;1m",
             rows);
-    int count;
-    printf(" %s: %n", prefix, &count);
+    int count = printf(" %s: ", prefix);
     printf("%-*s \r", cols-count-1, error);
     printf("\033[m\033[%zu;H", p+2);
 }
@@ -1188,10 +1187,10 @@ static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t 
 
     int count;
 #if VIEW_COUNT > 1
-    printf(" %d: %s%n", v+1, wd, &count);
+    count = printf(" %d: %s", v+1, wd);
 #else
     (void)v;
-    printf(" %s%n", wd, &count);
+    count = printf(" %s", wd);
 #endif
 
     printf("%-*s", (int)(cols - count), (wd[1] == '\0') ? "" : "/");
