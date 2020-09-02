@@ -1,13 +1,13 @@
 # Cactus File Manager
 
-![build](https://github.com/WillEccles/cfm/workflows/CFM%20Build/badge.svg)
+![](https://github.com/WillEccles/cfm/workflows/CFM%20Build/badge.svg)
 
 Cactus File Manager (cfm) is a TUI file manager with the goal of being simple,
 easy, and bloat-free, utilizing Vi-inspired keybinds. Whether or not
 you should use it depends on whether or not you like the name, dev, or
 screenshot, just like with all software.
 
-![Example Configuration](screenshot.png)
+![](screenshot.png)
 
 *Note: the screenshot above has a non-default pointer and no alternative
 views enabled.*
