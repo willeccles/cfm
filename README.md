@@ -4,8 +4,8 @@
 
 Cactus File Manager (cfm) is a TUI file manager with the goal of being simple,
 easy, and bloat-free, utilizing Vi-inspired keybinds. Whether or not
-you should use it depends on whether or not you like the name and/or the dev,
-like with all software.
+you should use it depends on whether or not you like the name, dev, or
+screenshot, just like with all software.
 
 ![Example Configuration](screenshot.png)
 
