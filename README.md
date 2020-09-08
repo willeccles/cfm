@@ -62,6 +62,7 @@ by me):
 - [AUR](https://aur.archlinux.org/packages/cfm/)
 - [MacPorts](https://ports.macports.org/port/cfm/)
 - [KISS](https://github.com/kisslinux/community/tree/master/community/cfm)
+- [XBPS](https://github.com/void-linux/void-packages/tree/master/srcpkgs/cfm)
 
 ## Bugs
 
