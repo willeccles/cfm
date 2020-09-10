@@ -209,7 +209,7 @@ static void reset_file_table(void) {
     if (!file_table) {
         return;
     }
-    
+
     struct hashed_file* elem;
     struct hashed_file* next;
     for (size_t i = 0; i < HASH_SIZE; i++) {
@@ -599,7 +599,7 @@ static int elemcmp(const void* a, const void* b) {
     return strnatcmp(x->name, y->name);
 }
 
-/* 
+/*
  * Get the user's home dir.
  * Unused, but left in case I add a ~ shortcut or something.
  */
@@ -1009,7 +1009,7 @@ static int readfname(char* out, const char* initialstr) {
 
 /*
  * Get a key. Wraps getchar() and returns hjkl instead of arrow keys.
- * Also, returns 
+ * Also, returns
  */
 static int getkey(void) {
     char c[3];
