@@ -1012,7 +1012,7 @@ static int readfname(char* out, const char* initialstr) {
  * Also, returns
  */
 static int getkey(void) {
-    char c[3];
+    char c[4];
 
     if (!interactive) {
         ssize_t n = read(STDIN_FILENO, c, 1);
@@ -1022,7 +1022,7 @@ static int getkey(void) {
         return *c;
     }
 
-    ssize_t n = read(STDIN_FILENO, c, 3);
+    ssize_t n = read(STDIN_FILENO, c, 4);
     if (n <= 0) {
         return -1;
     }
@@ -1031,18 +1031,27 @@ static int getkey(void) {
         return c[0];
     }
 
-    switch (c[2]) {
-        case ESC_UP:
-            return 'k';
-        case ESC_DOWN:
-            return 'j';
-        case ESC_RIGHT:
-            return 'l';
-        case ESC_LEFT:
-            return 'h';
-        default:
-            return -1;
+    if (n == 3) {
+        switch (c[2]) {
+            case ESC_UP:
+                return 'k';
+            case ESC_DOWN:
+                return 'j';
+            case ESC_RIGHT:
+                return 'l';
+            case ESC_LEFT:
+                return 'h';
+        }
+    } else {
+        if (c[2] == '5' && c[3] == '~') {
+            // page up
+        }
+        if (c[2] == '6' && c[3] == '~') {
+            // page down
+        }
     }
+
+    return -1;
 }
 
 /*
