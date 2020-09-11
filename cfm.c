@@ -1749,28 +1749,43 @@ outofloop:
                 }
                 break;
             case KEY_PGDN:
+                // don't do anything if we are too low to page down
+                if ((size_t)rows - 2 + view->selection - view->pos < dcount) {
+                    // 1. move the view down so the last item is now the top item
+                    // 2. select that one
+                    // 3. if there is NOT a full page available, we just put the cursor at the bottom of the screen
+                }
+                view->errorshown = false;
+                redraw = true;
                 break;
             case KEY_PGUP:
+                view->errorshown = false;
                 // do nothing if we are in the top "page"
                 if (view->pos != view->selection) {
-                    // 1. move view up so that the top item+1 is the last one in view
+                    // 1. move view up so that the top item is now the last item
                     // 2. select that one
-                    // 3. if there is NOT a full page of space available, go up to the top of the list and don't change which item is selected, if possible
-                    drawentry(&(list[view->selection]), false);
+                    // 3. if there is NOT a full page of space available, go up to the top of the list
                     if ((size_t)rows - 2 > view->selection - view->pos) {
                         view->selection = rows - 3;
                     } else {
                         view->selection -= view->pos;
                     }
                     view->pos = rows - 3;
-                    drawentry(&(list[view->selection]), false);
                     redraw = true;
+                } else {
+                    drawentry(&(list[view->selection]), false);
+                    view->pos = 0;
+                    view->selection = 0;
+                    printf("\033[%zu;1H", view->pos+2);
+                    drawentry(&(list[view->selection]), true);
+                    drawstatusline(&(list[view->selection]), dcount, view->selection, view->marks, view->pos);
                 }
                 break;
             case 'g':
                 if (pk != 'g') {
                     break;
                 }
+                // TODO don't redraw the whole screen if the screen is at the top already
                 view->errorshown = false;
                 view->pos = 0;
                 view->selection = 0;
