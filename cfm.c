@@ -1756,6 +1756,15 @@ outofloop:
                     // 1. move view up so that the top item+1 is the last one in view
                     // 2. select that one
                     // 3. if there is NOT a full page of space available, go up to the top of the list and don't change which item is selected, if possible
+                    drawentry(&(list[view->selection]), false);
+                    if ((size_t)rows - 2 > view->selection - view->pos) {
+                        view->selection = rows - 3;
+                    } else {
+                        view->selection -= view->pos;
+                    }
+                    view->pos = rows - 3;
+                    drawentry(&(list[view->selection]), false);
+                    redraw = true;
                 }
                 break;
             case 'g':
