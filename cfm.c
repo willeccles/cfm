@@ -1754,6 +1754,8 @@ outofloop:
                     // 1. move the view down so the last item is now the top item
                     // 2. select that one
                     // 3. if there is NOT a full page available, we just put the cursor at the bottom of the screen
+                    view->selection = 
+                    view->pos = 0;
                 }
                 view->errorshown = false;
                 redraw = true;
@@ -1764,7 +1766,7 @@ outofloop:
                 if (view->pos != view->selection) {
                     // 1. move view up so that the top item is now the last item
                     // 2. select that one
-                    // 3. if there is NOT a full page of space available, go up to the top of the list
+                    // 3. if we are within view of the top, don't go up
                     if ((size_t)rows - 2 > view->selection - view->pos) {
                         view->selection = rows - 3;
                     } else {
@@ -1772,13 +1774,6 @@ outofloop:
                     }
                     view->pos = rows - 3;
                     redraw = true;
-                } else {
-                    drawentry(&(list[view->selection]), false);
-                    view->pos = 0;
-                    view->selection = 0;
-                    printf("\033[%zu;1H", view->pos+2);
-                    drawentry(&(list[view->selection]), true);
-                    drawstatusline(&(list[view->selection]), dcount, view->selection, view->marks, view->pos);
                 }
                 break;
             case 'g':
