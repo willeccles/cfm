@@ -78,7 +78,9 @@ The functions of some keys may be dependent on values set in `config.h`.
 | <kbd>Q</kbd> | Quit cfm, saving its working directory to the file specified in `CD_ON_CLOSE`, if enabled. Disabled by default. |
 | <kbd>h</kbd> | Go up a directory[<sup>1</sup>](#1) |
 | <kbd>j</kbd> | Move down[<sup>1</sup>](#1) |
+| <kbd>PgDn</kbd>, <kbd>J</kbd> | Move down by one full screen |
 | <kbd>k</kbd> | Move up[<sup>1</sup>](#1) |
+| <kbd>PgUp</kbd>, <kbd>K</kbd> | Mode down by one full screen |
 | <kbd>l</kbd> | Enter directory, or open file in `EDITOR`[<sup>1</sup>](#1) |
 | <kbd>dd</kbd> | Delete currently selected file or directory (there is no confirmation, be careful) |
 | <kbd>T</kbd> | Creates a new file, opening `EDITOR` to obtain a filename[<sup>2</sup>](#2) |
