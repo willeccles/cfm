@@ -48,6 +48,10 @@
 #define ESC_LEFT 'D'
 #define ESC_RIGHT 'C'
 
+// arbitrary values for keys
+#define KEY_PGUP 'K'
+#define KEY_PGDN 'J'
+
 #define LIST_ALLOC_SIZE 64
 
 #ifndef POINTER
@@ -1012,7 +1016,7 @@ static int readfname(char* out, const char* initialstr) {
  * Also, returns
  */
 static int getkey(void) {
-    char c[4];
+    char c[6];
 
     if (!interactive) {
         ssize_t n = read(STDIN_FILENO, c, 1);
@@ -1022,7 +1026,7 @@ static int getkey(void) {
         return *c;
     }
 
-    ssize_t n = read(STDIN_FILENO, c, 4);
+    ssize_t n = read(STDIN_FILENO, c, 6);
     if (n <= 0) {
         return -1;
     }
@@ -1042,12 +1046,21 @@ static int getkey(void) {
             case ESC_LEFT:
                 return 'h';
         }
-    } else {
-        if (c[2] == '5' && c[3] == '~') {
-            // page up
+    } else if (n == 4) {
+        if (!strncmp(c+2, "5~", 2)) {
+            return KEY_PGUP;
         }
-        if (c[2] == '6' && c[3] == '~') {
-            // page down
+        if (!strncmp(c+2, "6~", 2)) {
+            return KEY_PGDN;
+        }
+    } else if (n == 6) {
+        // shift-up
+        if (!strncmp(c+2, "1;2A", 4)) {
+            return KEY_PGUP;
+        }
+        // shift-down
+        if (!strncmp(c+2, "1;2B", 4)) {
+            return KEY_PGDN;
         }
     }
 
@@ -1734,6 +1747,10 @@ outofloop:
                     drawentry(&(list[view->selection]), true);
                     drawstatusline(&(list[view->selection]), dcount, view->selection, view->marks, view->pos);
                 }
+                break;
+            case KEY_PGDN:
+                break;
+            case KEY_PGUP:
                 break;
             case 'g':
                 if (pk != 'g') {
