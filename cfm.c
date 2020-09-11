@@ -1753,15 +1753,14 @@ outofloop:
                 if ((size_t)rows - 2 + view->selection - view->pos < dcount) {
                     // 1. move the view down so the last item is now the top item
                     // 2. select that one
-                    // 3. if there is NOT a full page available, we just put the cursor at the bottom of the screen
-                    view->selection = 
+                    // 3. if we are within view of the bottom
+                    view->selection += (size_t)rows - 2 - view->pos - 1;
                     view->pos = 0;
+                    view->errorshown = false;
+                    redraw = true;
                 }
-                view->errorshown = false;
-                redraw = true;
                 break;
             case KEY_PGUP:
-                view->errorshown = false;
                 // do nothing if we are in the top "page"
                 if (view->pos != view->selection) {
                     // 1. move view up so that the top item is now the last item
@@ -1773,6 +1772,7 @@ outofloop:
                         view->selection -= view->pos;
                     }
                     view->pos = rows - 3;
+                    view->errorshown = false;
                     redraw = true;
                 }
                 break;
