@@ -1785,11 +1785,19 @@ outofloop:
                 if (pk != 'g') {
                     break;
                 }
-                // TODO don't redraw the whole screen if the screen is at the top already
                 view->errorshown = false;
-                view->pos = 0;
-                view->selection = 0;
-                redraw = true;
+                if (view->pos != view->selection) {
+                    view->pos = 0;
+                    view->selection = 0;
+                    redraw = true;
+                } else {
+                    drawentry(&(list[view->selection]), false);
+                    view->pos = 0;
+                    view->selection = 0;
+                    printf("\033[%zu;1H", view->pos+2);
+                    drawentry(&(list[view->selection]), true);
+                    drawstatusline(&(list[view->selection]), dcount, view->selection, view->marks, view->pos);
+                }
                 break;
             case 'G':
                 view->selection = dcount - 1;
