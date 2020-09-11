@@ -1751,6 +1751,12 @@ outofloop:
             case KEY_PGDN:
                 break;
             case KEY_PGUP:
+                // do nothing if we are in the top "page"
+                if (view->pos != view->selection) {
+                    // 1. move view up so that the top item+1 is the last one in view
+                    // 2. select that one
+                    // 3. if there is NOT a full page of space available, go up to the top of the list and don't change which item is selected, if possible
+                }
                 break;
             case 'g':
                 if (pk != 'g') {
