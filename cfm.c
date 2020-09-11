@@ -1139,7 +1139,7 @@ static void drawentry(struct listelem* e, bool selected) {
 static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m, size_t p) {
     if (!interactive) return;
     printf("\033[%d;H" // go to the bottom row
-            "\033[2K" // clear the row
+            //"\033[2K" // clear the row
             "\033[37;7;1m", // inverse + bold
             rows);
 
@@ -1166,7 +1166,7 @@ static void drawstatuslineerror(const char* prefix, const char* error, size_t p)
     }
 
     printf("\033[%d;H"
-            "\033[2K"
+            //"\033[2K"
             "\033[31;7;1m",
             rows);
     int count = printf(" %s: ", prefix);
