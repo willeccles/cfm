@@ -706,7 +706,7 @@ static void maketmpdir(void) {
 static void rmtmp(void) {
     if (tmpdir[0]) {
         if (0 != deldir(tmpdir)) {
-            perror("deldir: ~/.cfmtmp");
+            perror("rmtmp: deldir");
         }
     }
 }
