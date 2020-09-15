@@ -604,20 +604,6 @@ static int elemcmp(const void* a, const void* b) {
 }
 
 /*
- * Get the user's home dir.
- * Unused, but left in case I add a ~ shortcut or something.
- */
-static __attribute__((unused)) char* gethome(char* out, size_t len) {
-    const char* home = getenv("HOME");
-    if (!home) {
-        return NULL;
-    } else {
-        strncpy(out, home, len);
-        return out;
-    }
-}
-
-/*
  * Get editor.
  */
 static void geteditor(void) {
