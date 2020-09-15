@@ -1271,6 +1271,8 @@ int main(int argc, char** argv) {
     maketmpdir();
     rmpwdfile();
 
+    char* userhome = getenv("HOME");
+
     if (termsize()) {
         exit(EXIT_FAILURE);
     }
@@ -2044,6 +2046,17 @@ outofloop:
                     view->emsg = "No tmp dir, cannot cut!";
                     view->errorshown = true;
                 }
+                update = true;
+                break;
+            case '~':
+                if (userhome) {
+                    strncpy(view->wd, userhome, PATH_MAX);
+                    update = true;
+                }
+                break;
+            case '/':
+                view->wd[0] = '/';
+                view->wd[1] = '\0';
                 update = true;
                 break;
         }
