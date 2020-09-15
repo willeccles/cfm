@@ -90,7 +90,7 @@ The functions of some keys may be dependent on values set in `config.h`.
 | <kbd>R</kbd> | Renames a file, opening `EDITOR` to edit the filename[<sup>2</sup>](#2) |
 | <kbd>gg</kbd> | Move to top |
 | <kbd>G</kbd> | Move to bottom |
-| <kbd>m</kbd> | Mark for deletion |
+| <kbd>m</kbd>, <kbd>Space</kbd> | Mark for deletion |
 | <kbd>D</kbd> | Delete marked files (does not touch unmarked files) |
 | <kbd>u</kbd> | Undo the last deletion operation (if cfm was unable to access/create its trash directory `~/.cfmtrash`, deletion is permanent and this will not work) |
 | <kbd>X</kbd> | Cut the current file or directory (to be pasted again with <kbd>p</kbd>) |
