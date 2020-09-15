@@ -1958,6 +1958,7 @@ outofloop:
                     update = true;
                 }
                 break;
+            case ' ':
             case 'm':
                 list[view->selection].marked = !(list[view->selection].marked);
                 if (list[view->selection].marked) {
