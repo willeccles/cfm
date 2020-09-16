@@ -1160,7 +1160,7 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m, siz
     }
     // print the type of the file
     printf("%*s \r", cols-count-1, elemtypestrings[l->type]);
-    printf("\033[m\033[%zu;H", p+2); // move cursor back and reset formatting
+    printf("\033[m\n\033[%zu;H", p+2); // move cursor back and reset formatting
 }
 
 /*
@@ -1194,6 +1194,7 @@ static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t 
     // this gets rid of the flashing when redrawing
     for (int i = 2; i < rows; i++) {
         printf("\033[%dH" // row i
+                "\033[m"
                 "\033[K", i); // clear row
     }
 
