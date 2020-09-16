@@ -145,6 +145,7 @@ struct savedpos {
 
 static struct termios old_term;
 static atomic_bool redraw = false;
+static atomic_bool resize = false;
 static int rows, cols;
 static int pointerwidth = 2;
 static char editor[PATH_MAX+1];
@@ -1188,9 +1189,16 @@ static void drawstatuslineerror(const char* prefix, const char* error, size_t p)
  */
 static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o, size_t m, int v) {
     if (!interactive) return;
+
+    // clear the screen except for the top and bottom lines
+    // this gets rid of the flashing when redrawing
+    for (int i = 2; i < rows; i++) {
+        printf("\033[%dH" // row i
+                "\033[K", i); // clear row
+    }
+
     // go to the top and print the info bar
-    printf("\033[2J" // clear
-            "\033[H" // top left
+    printf("\033[H" // top left
             "\033[37;7;1m"); // style
 
     int count;
@@ -1244,6 +1252,7 @@ static void sigdie(int UNUSED(sig)) {
  * Signal handler for window resize.
  */
 static void sigresize(int UNUSED(sig)) {
+    resize = true;
     redraw = true;
 }
 
@@ -1433,8 +1442,21 @@ int main(int argc, char** argv) {
 
         if (redraw && interactive) {
             redraw = false;
-            if (termsize()) {
-                exit(EXIT_FAILURE);
+            // only get the current terminal size if we resized
+            if (resize) {
+                if (termsize()) {
+                    exit(EXIT_FAILURE);
+                }
+
+                // set new scroll region
+                printf("\033[2;%dr", rows-1);
+
+                // if our current item is outside the bounds of the screen, we need to move it up
+                if (view->pos >= (size_t)rows - 2) {
+                    view->pos = rows - 3;
+                }
+
+                resize = false;
             }
             drawscreen(view->wd, list, dcount, view->selection, view->pos, view->marks, _view);
             if (view->errorshown) {
