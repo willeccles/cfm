@@ -1,7 +1,7 @@
 #ifndef CFM_CONFIG_H
 #define CFM_CONFIG_H
 
-/* 
+/*
  * Uncomment an option to enable it.
  * Comment to disable.
  * Each is accompanied with an explanation.
@@ -91,6 +91,19 @@
  * Value: boolean (1 or 0)
  */
 //#define INVERT_SELECTION 1
+
+/* INVERT_FULL_SELECTION
+ * If set, cfm will invert the colors on the entire selected line. Otherwise,
+ * the effect will only appear on the name of the file.
+ * This has no effect if INVERT_SELECTION is disabled.
+ *
+ * Tip: This looks a little strange with the pointer. It's recommended that
+ * you either set POINTER to "" or enable INDENT_SELECTION.
+ *
+ * Default: 1
+ * Value: boolean (1 or 0)
+ */
+//#define COLOR_FULL_SELECTION 1
 
 /* INDENT_SELECTION:
  * If not set, all lines will be indented enough to make room

@@ -66,6 +66,10 @@
 # define INVERT_SELECTION 1
 #endif
 
+#ifndef INVERT_FULL_SELECTION
+# define INVERT_FULL_SELECTION 1
+#endif
+
 #ifndef INDENT_SELECTION
 # define INDENT_SELECTION 1
 #endif
@@ -1094,7 +1098,7 @@ static void drawentry(struct listelem* e, bool selected) {
     }
 #undef PBOLD
 
-#if INVERT_SELECTION
+#if INVERT_SELECTION && INVERT_FULL_SELECTION
     if (selected) {
         printf("\033[7m");
     }
@@ -1121,7 +1125,11 @@ static void drawentry(struct listelem* e, bool selected) {
 
 #if INVERT_SELECTION
     if (selected) {
+# if INVERT_FULL_SELECTION
         printf(" %s%-*s", e->name, cols, E_DIR(e->type) ? "/" : "");
+# else
+        printf(" \033[7m%s%s", e->name, E_DIR(e->type) ? "/" : "");
+# endif
     } else {
         printf(" %s", e->name);
         if (E_DIR(e->type)) {
