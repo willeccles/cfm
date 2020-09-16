@@ -1251,6 +1251,19 @@ static int parentdir(char* path) {
 }
 
 /*
+ * Returns a pointer to a string with the working directory after replacing
+ * a leading $HOME with ~, or the original wd if none was found.
+ */
+static char* homesubstwd(char* wd, char* home, size_t homelen) {
+    static char subbedpwd[PATH_MAX+1] = {0};
+    if (wd && !strncmp(wd, home, homelen)) {
+        snprintf(subbedpwd, PATH_MAX+1, "~%s", wd + homelen);
+        return subbedpwd;
+    }
+    return wd;
+}
+
+/*
  * Signal handler for SIGINT/SIGTERM.
  */
 static void sigdie(int UNUSED(sig)) {
@@ -1290,6 +1303,7 @@ int main(int argc, char** argv) {
     rmpwdfile();
 
     char* userhome = getenv("HOME");
+    size_t homelen = strlen(userhome);
 
     if (termsize()) {
         exit(EXIT_FAILURE);
@@ -1472,7 +1486,7 @@ int main(int argc, char** argv) {
 
                 resize = false;
             }
-            drawscreen(view->wd, list, dcount, view->selection, view->pos, view->marks, _view);
+            drawscreen(homesubstwd(view->wd, userhome, homelen), list, dcount, view->selection, view->pos, view->marks, _view);
             if (view->errorshown) {
                 drawstatuslineerror(view->eprefix, view->emsg, view->pos);
             }
