@@ -93,6 +93,10 @@
 # define ALLOW_SPACES 1
 #endif
 
+#ifndef ABBREVIATE_HOME
+# define ABBREVIATE_HOME 1
+#endif
+
 #ifdef VIEW_COUNT
 # if VIEW_COUNT > 10
 #  undef VIEW_COUNT
@@ -1255,11 +1259,16 @@ static int parentdir(char* path) {
  * a leading $HOME with ~, or the original wd if none was found.
  */
 static char* homesubstwd(char* wd, char* home, size_t homelen) {
+#if ABBREVIATE_HOME
     static char subbedpwd[PATH_MAX+1] = {0};
     if (wd && !strncmp(wd, home, homelen)) {
         snprintf(subbedpwd, PATH_MAX+1, "~%s", wd + homelen);
         return subbedpwd;
     }
+#else
+    (void)home;
+    (void)homelen;
+#endif
     return wd;
 }
 

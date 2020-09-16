@@ -92,7 +92,7 @@
  */
 //#define INVERT_SELECTION 1
 
-/* INVERT_FULL_SELECTION
+/* INVERT_FULL_SELECTION:
  * If set, cfm will invert the colors on the entire selected line. Otherwise,
  * the effect will only appear on the name of the file.
  * This has no effect if INVERT_SELECTION is disabled.
@@ -103,7 +103,7 @@
  * Default: 1
  * Value: boolean (1 or 0)
  */
-//#define COLOR_FULL_SELECTION 1
+//#define INVERT_FULL_SELECTION 1
 
 /* INDENT_SELECTION:
  * If not set, all lines will be indented enough to make room
@@ -160,5 +160,15 @@
  * Value: String
  */
 //#define CD_ON_CLOSE "/tmp/cfmdir"
+
+/* ABREVIATE_HOME:
+ * If set, replace a leading $HOME in the current working directory with ~. For
+ * example, if the current directory is /home/cactus/git/cfm, ~/git/cfm will be
+ * shown.
+ *
+ * Default: 1
+ * Value: boolean (1 or 0)
+ */
+//#define ABBREVIATE_HOME 1
 
 #endif
