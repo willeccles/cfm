@@ -1456,6 +1456,11 @@ int main(int argc, char** argv) {
                     view->pos = rows - 3;
                 }
 
+                // TODO: if the bottom of the screen is visible (or would become visible),
+                // we should pin it to the bottom and now allow blank space to show up at
+                // the bottom of the screen
+                // this may require us to store the old rows value before calling termsize()
+
                 resize = false;
             }
             drawscreen(view->wd, list, dcount, view->selection, view->pos, view->marks, _view);
