@@ -81,6 +81,8 @@ The functions of some keys may be dependent on values set in `config.h`.
 | <kbd>PgDn</kbd>, <kbd>J</kbd> | Move down by one full screen |
 | <kbd>k</kbd> | Move up[<sup>1</sup>](#1) |
 | <kbd>PgUp</kbd>, <kbd>K</kbd> | Mode down by one full screen |
+| <kbd>~</kbd> | Navigate to user home directory |
+| <kbd>/</kbd> | Navigate to the system root directory |
 | <kbd>l</kbd> | Enter directory, or open file in `EDITOR`[<sup>1</sup>](#1) |
 | <kbd>dd</kbd> | Delete currently selected file or directory (there is no confirmation, be careful) |
 | <kbd>T</kbd> | Creates a new file, opening `EDITOR` to obtain a filename[<sup>2</sup>](#2) |
@@ -88,7 +90,7 @@ The functions of some keys may be dependent on values set in `config.h`.
 | <kbd>R</kbd> | Renames a file, opening `EDITOR` to edit the filename[<sup>2</sup>](#2) |
 | <kbd>gg</kbd> | Move to top |
 | <kbd>G</kbd> | Move to bottom |
-| <kbd>m</kbd> | Mark for deletion |
+| <kbd>m</kbd>, <kbd>Space</kbd> | Mark for deletion |
 | <kbd>D</kbd> | Delete marked files (does not touch unmarked files) |
 | <kbd>u</kbd> | Undo the last deletion operation (if cfm was unable to access/create its trash directory `~/.cfmtrash`, deletion is permanent and this will not work) |
 | <kbd>X</kbd> | Cut the current file or directory (to be pasted again with <kbd>p</kbd>) |

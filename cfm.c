@@ -66,6 +66,10 @@
 # define INVERT_SELECTION 1
 #endif
 
+#ifndef INVERT_FULL_SELECTION
+# define INVERT_FULL_SELECTION 1
+#endif
+
 #ifndef INDENT_SELECTION
 # define INDENT_SELECTION 1
 #endif
@@ -87,6 +91,10 @@
 
 #ifndef ALLOW_SPACES
 # define ALLOW_SPACES 1
+#endif
+
+#ifndef ABBREVIATE_HOME
+# define ABBREVIATE_HOME 1
 #endif
 
 #ifdef VIEW_COUNT
@@ -145,6 +153,7 @@ struct savedpos {
 
 static struct termios old_term;
 static atomic_bool redraw = false;
+static atomic_bool resize = false;
 static int rows, cols;
 static int pointerwidth = 2;
 static char editor[PATH_MAX+1];
@@ -604,20 +613,6 @@ static int elemcmp(const void* a, const void* b) {
 }
 
 /*
- * Get the user's home dir.
- * Unused, but left in case I add a ~ shortcut or something.
- */
-static __attribute__((unused)) char* gethome(char* out, size_t len) {
-    const char* home = getenv("HOME");
-    if (!home) {
-        return NULL;
-    } else {
-        strncpy(out, home, len);
-        return out;
-    }
-}
-
-/*
  * Get editor.
  */
 static void geteditor(void) {
@@ -706,7 +701,7 @@ static void maketmpdir(void) {
 static void rmtmp(void) {
     if (tmpdir[0]) {
         if (0 != deldir(tmpdir)) {
-            perror("deldir: ~/.cfmtmp");
+            perror("rmtmp: deldir");
         }
     }
 }
@@ -1107,7 +1102,7 @@ static void drawentry(struct listelem* e, bool selected) {
     }
 #undef PBOLD
 
-#if INVERT_SELECTION
+#if INVERT_SELECTION && INVERT_FULL_SELECTION
     if (selected) {
         printf("\033[7m");
     }
@@ -1134,7 +1129,11 @@ static void drawentry(struct listelem* e, bool selected) {
 
 #if INVERT_SELECTION
     if (selected) {
+# if INVERT_FULL_SELECTION
         printf(" %s%-*s", e->name, cols, E_DIR(e->type) ? "/" : "");
+# else
+        printf(" \033[7m%s%s", e->name, E_DIR(e->type) ? "/" : "");
+# endif
     } else {
         printf(" %s", e->name);
         if (E_DIR(e->type)) {
@@ -1173,7 +1172,7 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m, siz
     }
     // print the type of the file
     printf("%*s \r", cols-count-1, elemtypestrings[l->type]);
-    printf("\033[m\033[%zu;H", p+2); // move cursor back and reset formatting
+    printf("\033[m\n\033[%zu;H", p+2); // move cursor back and reset formatting
 }
 
 /*
@@ -1202,9 +1201,17 @@ static void drawstatuslineerror(const char* prefix, const char* error, size_t p)
  */
 static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o, size_t m, int v) {
     if (!interactive) return;
+
+    // clear the screen except for the top and bottom lines
+    // this gets rid of the flashing when redrawing
+    for (int i = 2; i < rows; i++) {
+        printf("\033[%dH" // row i
+                "\033[m"
+                "\033[K", i); // clear row
+    }
+
     // go to the top and print the info bar
-    printf("\033[2J" // clear
-            "\033[H" // top left
+    printf("\033[H" // top left
             "\033[37;7;1m"); // style
 
     int count;
@@ -1248,6 +1255,24 @@ static int parentdir(char* path) {
 }
 
 /*
+ * Returns a pointer to a string with the working directory after replacing
+ * a leading $HOME with ~, or the original wd if none was found.
+ */
+static char* homesubstwd(char* wd, char* home, size_t homelen) {
+#if ABBREVIATE_HOME
+    static char subbedpwd[PATH_MAX+1] = {0};
+    if (wd && !strncmp(wd, home, homelen)) {
+        snprintf(subbedpwd, PATH_MAX+1, "~%s", wd + homelen);
+        return subbedpwd;
+    }
+#else
+    (void)home;
+    (void)homelen;
+#endif
+    return wd;
+}
+
+/*
  * Signal handler for SIGINT/SIGTERM.
  */
 static void sigdie(int UNUSED(sig)) {
@@ -1258,6 +1283,7 @@ static void sigdie(int UNUSED(sig)) {
  * Signal handler for window resize.
  */
 static void sigresize(int UNUSED(sig)) {
+    resize = true;
     redraw = true;
 }
 
@@ -1284,6 +1310,9 @@ int main(int argc, char** argv) {
     getopener();
     maketmpdir();
     rmpwdfile();
+
+    char* userhome = getenv("HOME");
+    size_t homelen = strlen(userhome);
 
     if (termsize()) {
         exit(EXIT_FAILURE);
@@ -1445,10 +1474,28 @@ int main(int argc, char** argv) {
 
         if (redraw && interactive) {
             redraw = false;
-            if (termsize()) {
-                exit(EXIT_FAILURE);
+            // only get the current terminal size if we resized
+            if (resize) {
+                if (termsize()) {
+                    exit(EXIT_FAILURE);
+                }
+
+                // set new scroll region
+                printf("\033[2;%dr", rows-1);
+
+                // if our current item is outside the bounds of the screen, we need to move it up
+                if (view->pos >= (size_t)rows - 2) {
+                    view->pos = rows - 3;
+                }
+
+                // TODO: if the bottom of the screen is visible (or would become visible),
+                // we should pin it to the bottom and now allow blank space to show up at
+                // the bottom of the screen
+                // this may require us to store the old rows value before calling termsize()
+
+                resize = false;
             }
-            drawscreen(view->wd, list, dcount, view->selection, view->pos, view->marks, _view);
+            drawscreen(homesubstwd(view->wd, userhome, homelen), list, dcount, view->selection, view->pos, view->marks, _view);
             if (view->errorshown) {
                 drawstatuslineerror(view->eprefix, view->emsg, view->pos);
             }
@@ -1958,6 +2005,7 @@ outofloop:
                     update = true;
                 }
                 break;
+            case ' ':
             case 'm':
                 list[view->selection].marked = !(list[view->selection].marked);
                 if (list[view->selection].marked) {
@@ -2057,6 +2105,17 @@ outofloop:
                     view->emsg = "No tmp dir, cannot cut!";
                     view->errorshown = true;
                 }
+                update = true;
+                break;
+            case '~':
+                if (userhome) {
+                    strncpy(view->wd, userhome, PATH_MAX);
+                    update = true;
+                }
+                break;
+            case '/':
+                view->wd[0] = '/';
+                view->wd[1] = '\0';
                 update = true;
                 break;
         }
