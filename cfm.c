@@ -2110,12 +2110,16 @@ outofloop:
             case '~':
                 if (userhome) {
                     strncpy(view->wd, userhome, PATH_MAX);
+                    view->pos = 0;
+                    view->selection = 0;
                     update = true;
                 }
                 break;
             case '/':
                 view->wd[0] = '/';
                 view->wd[1] = '\0';
+                view->pos = 0;
+                view->selection = 0;
                 update = true;
                 break;
         }
