@@ -1526,6 +1526,11 @@ int main(int argc, char** argv) {
                 }
                 break;
             case '\033':
+                if (view->marks > 0) {
+                    view->marks = 0;
+                    update = true;
+                    break;
+                } // fallthrough
             case 'q':
                 exit(EXIT_SUCCESS);
                 break;
