@@ -800,6 +800,7 @@ static int setupterm(void) {
 
     printf(
             "\033[?1049h" // use alternative screen buffer
+            "\033[?1000h" // enable mouse escape sequences
             "\033[?7l"    // disable line wrapping
             "\033[?25l"   // hide cursor
             "\033[2J"     // clear screen
@@ -824,8 +825,9 @@ static void resetterm(void) {
 
     printf(
             "\033[?7h"    // enable line wrapping
+            "\033[?1000l" // disable mouse escape sequences
             "\033[?25h"   // unhide cursor
-            "\033[r"     // reset scroll region
+            "\033[r"      // reset scroll region
             "\033[?1049l" // restore main screen
           );
 
