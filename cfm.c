@@ -801,6 +801,8 @@ static int setupterm(void) {
     printf(
             "\033[?1049h" // use alternative screen buffer
             "\033[?1000h" // enable mouse escape sequences
+            "\033[?1015h" // urxvt compatibility for mouse
+            "\033[?1006h" // report mouse as utf-8
             "\033[?7l"    // disable line wrapping
             "\033[?25l"   // hide cursor
             "\033[2J"     // clear screen
