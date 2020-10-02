@@ -1,3 +1,4 @@
+/* vim: set ai ts=4 et sw=4 tw=80 cino=ws,l1: */
 /* Copyright (c) Will Eccles <will@eccles.dev>
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -8,7 +9,7 @@
 #ifdef __APPLE__
 # define _DARWIN_C_SOURCE
 #elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-#define __BSD_VISIBLE 1
+# define __BSD_VISIBLE 1
 #endif
 
 #include <ctype.h>
@@ -191,8 +192,8 @@ static bool is_file_hashed(const struct stat* st) {
     struct hashed_file* elem = file_table[hashfn(st->st_ino)];
     while (elem != NULL) {
         if (elem->ino == st->st_ino
-            && elem->dev == st->st_dev
-            && elem->isdir == !!S_ISDIR(st->st_mode)) {
+                && elem->dev == st->st_dev
+                && elem->isdir == !!S_ISDIR(st->st_mode)) {
             return true;
         }
     }
@@ -315,10 +316,10 @@ static void getrealcwd(char* buf, size_t size) {
     pwd = getenv("PWD");
     struct stat dotstat, pwdstat;
     if (pwd != NULL
-        && stat(".", &dotstat) == 0
-        && stat(pwd, &pwdstat) == 0
-        && pwdstat.st_dev == dotstat.st_dev
-        && pwdstat.st_ino == dotstat.st_ino) {
+            && stat(".", &dotstat) == 0
+            && stat(pwd, &pwdstat) == 0
+            && pwdstat.st_dev == dotstat.st_dev
+            && pwdstat.st_ino == dotstat.st_ino) {
         strncpy(buf, pwd, size);
     } else {
         (void)getcwd(buf, size);
@@ -483,43 +484,47 @@ static int cpfile_inner(const char* src, const char* dst) {
     }
 
 notreg:
-    // source is not a regular file (it's a symlink or special)
-    if (S_ISLNK(srcstat.st_mode)) {
-        char lbuf[PATH_MAX+1] = {0};
-        ssize_t ls = readlink(src, lbuf, PATH_MAX);
-        if (ls == -1) {
-            return -1;
-        }
-        lbuf[ls] = '\0';
+    {
+        // source is not a regular file (it's a symlink or special)
+        if (S_ISLNK(srcstat.st_mode)) {
+            char lbuf[PATH_MAX+1] = {0};
+            ssize_t ls = readlink(src, lbuf, PATH_MAX);
+            if (ls == -1) {
+                return -1;
+            }
+            lbuf[ls] = '\0';
 
-        int r = symlink(lbuf, dst);
-        if (r != 0) {
-            return -1;
-        }
+            int r = symlink(lbuf, dst);
+            if (r != 0) {
+                return -1;
+            }
 
-        // can't preserve stuff for symlinks
-        return 0;
-    } else if (S_ISBLK(srcstat.st_mode) || S_ISCHR(srcstat.st_mode)
-            || S_ISSOCK(srcstat.st_mode) || S_ISFIFO(srcstat.st_mode)) {
-        if (mknod(dst, srcstat.st_mode, srcstat.st_rdev) < 0) {
+            // can't preserve stuff for symlinks
+            return 0;
+        } else if (S_ISBLK(srcstat.st_mode) || S_ISCHR(srcstat.st_mode)
+                || S_ISSOCK(srcstat.st_mode) || S_ISFIFO(srcstat.st_mode)) {
+            if (mknod(dst, srcstat.st_mode, srcstat.st_rdev) < 0) {
+                return -1;
+            }
+        } else {
             return -1;
         }
-    } else {
-        return -1;
     }
 
-preserve:;
-     // preserve mode, owner, attributes, etc. here
-     struct timeval t[2];
-     t[1].tv_sec = t[0].tv_sec = srcstat.st_mtime;
-     t[1].tv_usec = t[0].tv_usec = 0;
+preserve:
+    {
+        // preserve mode, owner, attributes, etc. here
+        struct timeval t[2];
+        t[1].tv_sec = t[0].tv_sec = srcstat.st_mtime;
+        t[1].tv_usec = t[0].tv_usec = 0;
 
-     // we will fail silently if any of these don't work
-     utimes(dst, t);
-     (void)chown(dst, srcstat.st_uid, srcstat.st_gid);
-     chmod(dst, srcstat.st_mode);
+        // we will fail silently if any of these don't work
+        utimes(dst, t);
+        (void)chown(dst, srcstat.st_uid, srcstat.st_gid);
+        chmod(dst, srcstat.st_mode);
 
-     return s;
+        return s;
+    }
 }
 
 /*
@@ -1377,14 +1382,7 @@ int main(int argc, char** argv) {
     } views[VIEW_COUNT];
 
     for (int i = 0; i < VIEW_COUNT; i++) {
-        views[i] = (struct view){
-            .wd = NULL,
-            .errorshown = false,
-            .selection = 0,
-            .pos = 0,
-            .marks = 0,
-            .backstack = NULL,
-        };
+        views[i] = (struct view){ NULL, NULL, NULL, false, 0, 0, 0, NULL };
     }
 
     for (int i = 0; i < VIEW_COUNT; i++) {
