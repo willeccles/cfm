@@ -184,7 +184,10 @@ enabled, or the \fICFM_CD_ON_CLOSE\fR environment variable if not.
 If stdin or stdout are not attached to a TTY,
 .B cfm
 will read commands from stdin and quit at EOF, skipping all drawing.
-Any errors are fatal and will be printed to stderr.
+Any errors are fatal and will be printed to stderr. Note that in
+non-interactive mode,
+.B cfm
+will NOT backup files when deleting. All deletions will be permanent.
 
 .SH AUTHOR
 Will Eccles <will@eccles.dev>.

@@ -120,7 +120,10 @@ you wish, you can disable spaces by setting `ALLOW_SPACES` to 0.
 If `stdin` or `stdout` are not attached to a TTY, cfm will read commands from
 `stdin` until either EOF is reached or it does not read any more data. This can
 be used to script operations. All errors will be printed to `stderr` and are
-fatal. In scripting mode, cfm will never draw to the screen.
+fatal. In scripting mode, cfm will never draw to the screen. Note: in
+non-interactive mode, cfm will NOT backup files on deletion. This means that you
+cannot use <kbd>dd</kbd> followed by <kbd>u</kbd>! All deletions made in
+non-interactive mode will be final.
 
 Example:
 

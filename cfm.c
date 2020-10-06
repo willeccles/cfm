@@ -1916,7 +1916,7 @@ outofloop:
                 if (pk != k) {
                     break;
                 }
-                if (k == 'd' && tmpdir[0]) {
+                if (interactive && k == 'd' && tmpdir[0]) {
                     if (NULL == delstack) {
                         delstack = newdeleted(false);
                     } else {
