@@ -48,6 +48,7 @@
 #define ESC_DOWN 'B'
 #define ESC_LEFT 'D'
 #define ESC_RIGHT 'C'
+#define K_ALT(k) ((int)(k) | (int)0xFFFFFF00)
 
 // arbitrary values for keys
 #define KEY_PGUP 'K'
@@ -196,6 +197,7 @@ static bool is_file_hashed(const struct stat* st) {
                 && elem->isdir == !!S_ISDIR(st->st_mode)) {
             return true;
         }
+        elem = elem->next;
     }
     return false;
 }
@@ -250,7 +252,7 @@ static int rmFiles(const char *pathname, const struct stat *sbuf, int type, stru
  * Deletes a directory, even if it contains files.
  */
 static int deldir(const char* dir) {
-    return nftw(dir, rmFiles, 10, FTW_DEPTH | FTW_MOUNT | FTW_PHYS);
+    return nftw(dir, rmFiles, 512, FTW_DEPTH | FTW_MOUNT | FTW_PHYS);
 }
 
 /*
@@ -1029,6 +1031,10 @@ static int getkey(void) {
     ssize_t n = read(STDIN_FILENO, c, 6);
     if (n <= 0) {
         return -1;
+    }
+
+    if (n == 2 && c[0] == '\033' && isalpha(c[1])) {
+        return K_ALT(c[1]);
     }
 
     if (n < 3) {
@@ -1905,11 +1911,12 @@ outofloop:
                 }
                 view->errorshown = false;
                 break;
+            case K_ALT('d'):
             case 'd':
-                if (pk != 'd') {
+                if (pk != k) {
                     break;
                 }
-                if (tmpdir[0]) {
+                if (k == 'd' && tmpdir[0]) {
                     if (NULL == delstack) {
                         delstack = newdeleted(false);
                     } else {
