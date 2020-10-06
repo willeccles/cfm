@@ -84,7 +84,8 @@ The functions of some keys may be dependent on values set in `config.h`.
 | <kbd>~</kbd> | Navigate to user home directory |
 | <kbd>/</kbd> | Navigate to the system root directory |
 | <kbd>l</kbd> | Enter directory, or open file in `EDITOR`[<sup>1</sup>](#1) |
-| <kbd>dd</kbd> | Delete currently selected file or directory (there is no confirmation, be careful) |
+| <kbd>dd</kbd> | Delete currently selected file or directory (there is no confirmation, be careful), backing it up to the `CFM_TMP` directory if one exists, such that it can be undone with <kbd>u</kbd> |
+| <kbd>Alt</kbd>+<kbd>dd</kbd> | Works the same as <kbd>dd</kbd>, but is always permanent, even if a `CFM_TMP` directory exists. This is useful for huge files/directories that would take a while to copy. Be careful! |
 | <kbd>T</kbd> | Creates a new file, opening `EDITOR` to obtain a filename[<sup>2</sup>](#2) |
 | <kbd>M</kbd> | Creates a new directory, opening `EDITOR` to obtain a directory name[<sup>2</sup>](#2) |
 | <kbd>R</kbd> | Renames a file, opening `EDITOR` to edit the filename[<sup>2</sup>](#2) |

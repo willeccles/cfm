@@ -125,7 +125,17 @@ setting \fIALLOW_SPACES\fR to 0 in \fIconfig.h\fR.
 
 .TP
 .B dd
-Delete current selection (does not touch marked files)
+Delete current selection (does not touch marked files). This will copy the
+file/directory into the \fICFM_TMP\fR directory and can be undone with
+.BR u .
+If the \fICFM_TMP\fR directory does not exist, deletions will be permanent.
+
+.TP
+.B "alt+dd"
+Permanently delete current selection (does not touch marked files) without
+backing up for undo like
+.B dd
+does. This is useful for large directories where a copy will take a long time.
 
 .TP
 .B "m Space"
