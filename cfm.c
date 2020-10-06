@@ -48,6 +48,7 @@
 #define ESC_DOWN 'B'
 #define ESC_LEFT 'D'
 #define ESC_RIGHT 'C'
+#define K_ALT(k) ((int)(k) | (int)0xFFFFFF00)
 
 // arbitrary values for keys
 #define KEY_PGUP 'K'
@@ -1032,6 +1033,10 @@ static int getkey(void) {
         return -1;
     }
 
+    if (n == 2 && c[0] == '\033' && isalpha(c[1])) {
+        return K_ALT(c[1]);
+    }
+
     if (n < 3) {
         return c[0];
     }
@@ -1906,11 +1911,12 @@ outofloop:
                 }
                 view->errorshown = false;
                 break;
+            case K_ALT('d'):
             case 'd':
-                if (pk != 'd') {
+                if (pk != k) {
                     break;
                 }
-                if (tmpdir[0]) {
+                if (k == 'd' && tmpdir[0]) {
                     if (NULL == delstack) {
                         delstack = newdeleted(false);
                     } else {
