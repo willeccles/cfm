@@ -196,6 +196,7 @@ static bool is_file_hashed(const struct stat* st) {
                 && elem->isdir == !!S_ISDIR(st->st_mode)) {
             return true;
         }
+        elem = elem->next;
     }
     return false;
 }
@@ -250,7 +251,7 @@ static int rmFiles(const char *pathname, const struct stat *sbuf, int type, stru
  * Deletes a directory, even if it contains files.
  */
 static int deldir(const char* dir) {
-    return nftw(dir, rmFiles, 10, FTW_DEPTH | FTW_MOUNT | FTW_PHYS);
+    return nftw(dir, rmFiles, 512, FTW_DEPTH | FTW_MOUNT | FTW_PHYS);
 }
 
 /*
