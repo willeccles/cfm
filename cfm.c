@@ -163,8 +163,12 @@ static char opener[PATH_MAX+1];
 static char shell[PATH_MAX+1];
 static char tmpdir[PATH_MAX+1];
 static char cdonclosefile[PATH_MAX+1];
+static size_t cursorpos; // used to back up cursor position before leaving main()
 
 static atomic_bool interactive = true;
+
+// TODO add other function declarations here
+static void drawstatuslineprogress(const char* prefix, size_t progress, size_t total, size_t p);
 
 /*
  * Hash table for files created by the copy function.
@@ -1206,6 +1210,25 @@ static void drawstatuslineerror(const char* prefix, const char* error, size_t p)
     printf("\033[m\033[%zu;H", p+2);
 }
 
+static void drawstatuslineprogress(const char* prefix, size_t progress, size_t total, size_t p) {
+    if (interactive) {
+        printf("\033[%d;H"
+                "\033[37;7;1m",
+                rows);
+
+        int n;
+        if (total != 0) {
+            n = printf(" %s: %zu/%zu", prefix, progress, total);
+        } else {
+            n = printf(" %s: %zu", prefix, progress);
+        }
+
+        printf("%-*s\r", cols - n, " ");
+
+        printf("\033[m\033[%zu;H", p+2);
+    }
+}
+
 /*
  * Draws the whole screen (redraw).
  * Use sparingly.
@@ -1409,7 +1432,7 @@ int main(int argc, char** argv) {
     if (!tmpdir[0]) {
         view->errorshown = true;
         view->eprefix = "Warning";
-        view->emsg = "Trash dir not available";
+        view->emsg = "undo not available";
     }
 
     int k = -1, pk = -1, status;
