@@ -1298,6 +1298,24 @@ static void sigresize(int UNUSED(sig)) {
     redraw = true;
 }
 
+/*
+ * Signal handler for SIGTSTP, which is ^Z from the shell.
+ */
+static void sigtstp(int UNUSED(sig)) {
+    resetterm();
+    kill(getpid(), SIGSTOP);
+}
+
+/*
+ * Signal handler for SIGCONT which is used when using fg in the shell.
+ */
+static void sigcont(int UNUSED(sig)) {
+    backupterm();
+    setupterm();
+    resize = true;
+    redraw = true;
+}
+
 int main(int argc, char** argv) {
     if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO)) {
         interactive = false;
@@ -1345,6 +1363,22 @@ int main(int argc, char** argv) {
         exit(EXIT_FAILURE);
     }
     if (sigaction(SIGINT, &sa_ded, NULL) < 0) {
+        perror("sigaction");
+        exit(EXIT_FAILURE);
+    }
+
+    struct sigaction sa_tstp = {
+        .sa_handler = sigtstp,
+    };
+    if (sigaction(SIGTSTP, &sa_tstp, NULL) < 0) {
+        perror("sigaction");
+        exit(EXIT_FAILURE);
+    }
+
+    struct sigaction sa_cont = {
+        .sa_handler = sigcont,
+    };
+    if (sigaction(SIGCONT, &sa_cont, NULL) < 0) {
         perror("sigaction");
         exit(EXIT_FAILURE);
     }
