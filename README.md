@@ -59,10 +59,7 @@ into `/usr`, you can do `sudo make install PREFIX=/usr`.
 At the moment, cfm is available from the following sources (not all maintained
 by me):
 
-- [AUR](https://aur.archlinux.org/packages/cfm/)
-- [MacPorts](https://ports.macports.org/port/cfm/)
-- [KISS](https://github.com/kisslinux/community/tree/master/community/cfm)
-- [XBPS](https://github.com/void-linux/void-packages/tree/master/srcpkgs/cfm)
+[![Packaging status](https://repology.org/badge/vertical-allrepos/cfm.svg)](https://repology.org/project/cfm/versions)
 
 ## Bugs
 
