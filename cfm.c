@@ -181,11 +181,14 @@ struct hashed_file {
     bool isdir;
 };
 
+#if 0
 static struct hashed_file** file_table;
+#endif
 
 /*
  * Returns whether or not a file is in the hash table.
  */
+#if 0
 static bool is_file_hashed(const struct stat* st) {
     if (!file_table) {
         return false;
@@ -201,10 +204,12 @@ static bool is_file_hashed(const struct stat* st) {
     }
     return false;
 }
+#endif
 
 /*
  * Hashes a file and adds it to the hash table.
  */
+#if 0
 static void add_file_hash(const struct stat* st) {
     struct hashed_file* elem = malloc(sizeof(struct hashed_file));
     elem->ino = st->st_ino;
@@ -217,10 +222,12 @@ static void add_file_hash(const struct stat* st) {
     elem->next = file_table[i];
     file_table[i] = elem;
 }
+#endif
 
 /*
  * Cleans up the file table.
  */
+#if 0
 static void reset_file_table(void) {
     if (!file_table) {
         return;
@@ -239,21 +246,26 @@ static void reset_file_table(void) {
     free(file_table);
     file_table = NULL;
 }
+#endif
 
 /*
  * Unlinks a file. Used for deldir.
  */
+#if 0
 static int rmFiles(const char *pathname, const struct stat *sbuf, int type, struct FTW *ftwb) {
     (void)sbuf; (void)type; (void)ftwb;
     return remove(pathname);
 }
+#endif
 
 /*
  * Deletes a directory, even if it contains files.
  */
+#if 0
 static int deldir(const char* dir) {
     return nftw(dir, rmFiles, 512, FTW_DEPTH | FTW_MOUNT | FTW_PHYS);
 }
+#endif
 
 /*
  * If the path pointed to by f is a file, unlinks the file.
@@ -261,6 +273,7 @@ static int deldir(const char* dir) {
  *
  * Returns 0 on success.
  */
+#if 0
 static int del(const char* f) {
     struct stat fst;
     if (0 != lstat(f, &fst)) {
@@ -273,11 +286,13 @@ static int del(const char* f) {
         return unlink(f);
     }
 }
+#endif
 
 /*
  * Stats a file and returns 1 if it exists or 0 if
  * it doesn't exist. It returns -1 if there was an error.
  */
+#if 0
 static int exists(const char* path) {
     struct stat fst;
     if (0 != lstat(path, &fst)) {
@@ -290,12 +305,14 @@ static int exists(const char* path) {
         return 1;
     }
 }
+#endif
 
 /*
  * Get the base name of a file.
  * This is the same thing as running `basename x/y/z` at
  * the command line.
  */
+#if 0
 static char* basename(const char* path) {
     char* r = strrchr(path, '/');
     if (r) {
@@ -303,6 +320,7 @@ static char* basename(const char* path) {
     }
     return r;
 }
+#endif
 
 /*
  * Gets the working directory the same way as getcwd,
@@ -313,6 +331,7 @@ static char* basename(const char* path) {
  * This is a *little bit* identical to the GNU extension,
  * get_current_dir_name().
  */
+#if 0
 static void getrealcwd(char* buf, size_t size) {
     char* pwd;
     pwd = getenv("PWD");
@@ -327,12 +346,14 @@ static void getrealcwd(char* buf, size_t size) {
         (void)getcwd(buf, size);
     }
 }
+#endif
 
 /*
  * This is the internal portion. Use the cpfile function instead.
  * Copy file or directory recursively.
  * Returns 0 on success, -1 on error.
  */
+#if 0
 static int cpfile_inner(const char* src, const char* dst) {
     char* b = basename(src);
     if (b && (0 == strcmp(b, ".") || 0 == strcmp(b, ".."))) {
@@ -528,15 +549,18 @@ preserve:
         return s;
     }
 }
+#endif
 
 /*
  * Copies a file or directory. Returns 0 on success and -1 on failure.
  */
+#if 0
 static int cpfile(const char* src, const char* dst) {
     int s = cpfile_inner(src, dst);
     reset_file_table();
     return s;
 }
+#endif
 
 static struct deletedfile* newdeleted(bool mass) {
     struct deletedfile* d = malloc(sizeof(struct deletedfile));
@@ -567,6 +591,7 @@ static struct deletedfile* freedeleted(struct deletedfile* f) {
     return d;
 }
 
+#if 0
 static int strnatcmp(const char *s1, const char *s2) {
     for (;;) {
         if (*s2 == '\0') {
@@ -598,10 +623,12 @@ static int strnatcmp(const char *s1, const char *s2) {
         }
     }
 }
+#endif
 
 /*
  * Comparison function for list elements for qsort.
  */
+#if 0
 static int elemcmp(const void* a, const void* b) {
     const struct listelem* x = a;
     const struct listelem* y = b;
@@ -618,6 +645,7 @@ static int elemcmp(const void* a, const void* b) {
 
     return strnatcmp(x->name, y->name);
 }
+#endif
 
 /*
  * Get editor.

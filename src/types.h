@@ -70,16 +70,4 @@ struct cfm_savedpos {
     struct cfm_savedpos* prev;
 };
 
-/*
- * Represents a file in the hash table.
- *
- * TODO: move to another file
- */
-struct cfm_hashedfile {
-    ino_t ino;
-    dev_t dev;
-    struct cfm_hashedfile* next;
-    bool isdir;
-};
-
 #endif /* CFM_TYPES_H_ */
