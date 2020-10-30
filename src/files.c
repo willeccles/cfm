@@ -59,6 +59,21 @@ char* cfm_basename(const char* path) {
     return r;
 }
 
+int cfm_parentdir(char* path) {
+    char* last = strrchr(path, '/');
+    if (last == path && path[1] == '\0') {
+        return 0;
+    }
+
+    if (last == path) {
+        path[1] = '\0';
+    } else {
+        *last = '\0';
+    }
+
+    return 1;
+}
+
 void cfm_getcwd(char* buf, size_t size) {
     char* pwd;
     pwd = getenv("PWD");

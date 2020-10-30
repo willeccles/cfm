@@ -43,6 +43,7 @@
 # define UNUSED(x) UNUSED_##x
 #endif
 
+#if 0
 #define K_ESC '\033'
 #define ESC_UP 'A'
 #define ESC_DOWN 'B'
@@ -53,6 +54,7 @@
 // arbitrary values for keys
 #define KEY_PGUP 'K'
 #define KEY_PGDN 'J'
+#endif
 
 #if 0
 #define LIST_ALLOC_SIZE 64
@@ -789,6 +791,7 @@ static void rmpwdfile(void) {
  * Save the default terminal settings.
  * Returns 0 on success.
  */
+#if 0
 static int backupterm(void) {
     if (!interactive) return 0;
     if (tcgetattr(STDIN_FILENO, &old_term) < 0) {
@@ -797,11 +800,13 @@ static int backupterm(void) {
     }
     return 0;
 }
+#endif
 
 /*
  * Get the size of the terminal.
  * Returns 0 on success.
  */
+#if 0
 static int termsize(void) {
     if (!interactive) return 0;
     struct winsize ws;
@@ -815,11 +820,13 @@ static int termsize(void) {
 
     return 0;
 }
+#endif
 
 /*
  * Sets up the terminal for TUI.
  * Return 0 on success.
  */
+#if 0
 static int setupterm(void) {
     if (!interactive) return 0;
 
@@ -844,10 +851,12 @@ static int setupterm(void) {
 
     return 0;
 }
+#endif
 
 /*
  * Resets the terminal to how it was before we ruined it.
  */
+#if 0
 static void resetterm(void) {
     if (!interactive) return;
 
@@ -867,10 +876,12 @@ static void resetterm(void) {
 
     fflush(stdout);
 }
+#endif
 
 /*
  * Creates a child process.
  */
+#if 0
 static void execcmd(const char* path, const char* cmd, const char* arg) {
     pid_t pid = fork();
     if (pid < 0) {
@@ -895,6 +906,7 @@ static void execcmd(const char* path, const char* cmd, const char* arg) {
     setupterm();
     fflush(stdout);
 }
+#endif
 
 /*
  * Reads a directory into the list, returning the number of items in the dir.
@@ -987,6 +999,7 @@ static int listdir(const char* path, struct listelem** list, size_t* listsize, s
  * is still usable, it will be there. Else, out will
  * be empty.
  */
+#if 0
 static int readfname(char* out, const char* initialstr) {
     if (editor[0]) {
         char template[] = "/tmp/cfmtmp.XXXXXXXXXX";
@@ -1050,11 +1063,13 @@ static int readfname(char* out, const char* initialstr) {
         return -1;
     }
 }
+#endif
 
 /*
  * Get a key. Wraps getchar() and returns hjkl instead of arrow keys.
  * Also, returns
  */
+#if 0
 static int getkey(void) {
     char c[6];
 
@@ -1110,10 +1125,12 @@ static int getkey(void) {
 
     return -1;
 }
+#endif
 
 /*
  * Draws one element to the screen.
  */
+#if 0
 static void drawentry(struct listelem* e, bool selected) {
     if (!interactive) return;
     printf("\033[2K"); // clear line
@@ -1202,10 +1219,12 @@ static void drawentry(struct listelem* e, bool selected) {
 
     printf("\r\033[m"); // cursor to column 1
 }
+#endif
 
 /*
  * Draws the status line at the bottom of the screen.
  */
+#if 0
 static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m, size_t p) {
     if (!interactive) return;
     printf("\033[%d;H" // go to the bottom row
@@ -1223,10 +1242,12 @@ static void drawstatusline(struct listelem* l, size_t n, size_t s, size_t m, siz
     printf("%*s \r", cols-count-1, elemtypestrings[l->type]);
     printf("\033[m\n\033[%zu;H", p+2); // move cursor back and reset formatting
 }
+#endif
 
 /*
  * Draws the statusline with an error message in it.
  */
+#if 0
 static void drawstatuslineerror(const char* prefix, const char* error, size_t p) {
     if (!interactive) {
         // instead print to stderr
@@ -1243,11 +1264,13 @@ static void drawstatuslineerror(const char* prefix, const char* error, size_t p)
     printf("%-*s \r", cols-count-1, error);
     printf("\033[m\033[%zu;H", p+2);
 }
+#endif
 
 /*
  * Draws the whole screen (redraw).
  * Use sparingly.
  */
+#if 0
 static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t o, size_t m, int v) {
     if (!interactive) return;
 
@@ -1282,12 +1305,14 @@ static void drawscreen(char* wd, struct listelem* l, size_t n, size_t s, size_t 
 
     drawstatusline(&(l[s]), n, s, m, o);
 }
+#endif
 
 /*
  * Writes back the parent directory of a path.
  * Returns 1 if the path was changed, 0 if not (i.e. if
  * the path was "/").
  */
+#if 0
 static int parentdir(char* path) {
     char* last = strrchr(path, '/');
     if (last == path && path[1] == '\0') {
@@ -1302,11 +1327,13 @@ static int parentdir(char* path) {
 
     return 1;
 }
+#endif
 
 /*
  * Returns a pointer to a string with the working directory after replacing
  * a leading $HOME with ~, or the original wd if none was found.
  */
+#if 0
 static char* homesubstwd(char* wd, char* home, size_t homelen) {
 #if ABBREVIATE_HOME
     static char subbedpwd[PATH_MAX+1] = {0};
@@ -1320,6 +1347,7 @@ static char* homesubstwd(char* wd, char* home, size_t homelen) {
 #endif
     return wd;
 }
+#endif
 
 /*
  * Signal handler for SIGINT/SIGTERM.

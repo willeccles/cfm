@@ -24,6 +24,13 @@ extern int cfm_file_exists(const char* path);
 extern char* cfm_basename(const char* path);
 
 /*
+ * Writes back the parent directory of a path.
+ * Returns 1 if the path was changed, 0 if not (i.e. if
+ * the path was "/").
+ */
+extern int cfm_parentdir(char* path);
+
+/*
  * Gets the working directory the same way as getcwd(), but checks $PWD first.
  * If $PWD is valid, it will be stored in buf; otherwise getcwd() will be
  * called. This fixes the case where the pwd has a symlink in it, where
