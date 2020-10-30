@@ -54,6 +54,7 @@
 #define KEY_PGUP 'K'
 #define KEY_PGDN 'J'
 
+#if 0
 #define LIST_ALLOC_SIZE 64
 
 #ifndef POINTER
@@ -109,6 +110,7 @@
 # endif
 #else
 # define VIEW_COUNT 2
+#endif
 #endif
 
 #define COPYFLAGS (COPYFILE_ALL | COPYFILE_EXCL | COPYFILE_NOFOLLOW | COPYFILE_RECURSIVE)
@@ -650,6 +652,7 @@ static int elemcmp(const void* a, const void* b) {
 /*
  * Get editor.
  */
+#if 0
 static void geteditor(void) {
 #ifdef EDITOR
     strncpy(editor, EDITOR, PATH_MAX);
@@ -667,10 +670,12 @@ static void geteditor(void) {
     }
 #endif /* EDITOR */
 }
+#endif
 
 /*
  * Get shell.
  */
+#if 0
 static void getshell(void) {
 #ifdef SHELL
     strncpy(shell, SHELL, PATH_MAX);
@@ -688,10 +693,12 @@ static void getshell(void) {
     }
 #endif /* SHELL */
 }
+#endif
 
 /*
  * Get the opener program.
  */
+#if 0
 static void getopener(void) {
 #ifdef OPENER
     strncpy(opener, OPENER, PATH_MAX);
@@ -709,6 +716,7 @@ static void getopener(void) {
     }
 #endif
 }
+#endif
 
 /*
  * Get the tmp directory.
@@ -893,6 +901,7 @@ static void execcmd(const char* path, const char* cmd, const char* arg) {
  * This will return 0 on success.
  * On failure, 'opendir' will have set 'errno'.
  */
+#if 0
 static int listdir(const char* path, struct listelem** list, size_t* listsize, size_t* rcount, bool hidden) {
     DIR* d;
     struct dirent* dir;
@@ -959,6 +968,7 @@ static int listdir(const char* path, struct listelem** list, size_t* listsize, s
     *rcount = count;
     return 0;
 }
+#endif
 
 /*
  * Get a filename from the user and store it in 'out'.

@@ -1,20 +1,23 @@
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <ftw.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <sys/time.h>
 #include <utime.h>
-#include <limits.h>
-#include <dirent.h>
 
 #include "files.h"
 #include "hashtable.h"
 #include "types.h"
+#include "util.h"
+
+#define LIST_ALLOC_SIZE 64
 
 static cfm_hashtable file_table;
 
@@ -77,8 +80,72 @@ int cfm_cp(const char* src, const char* dst) {
     return s;
 }
 
-int listdir(const char* path, struct cfm_listelem** list, size_t* listsize,
+int cfm_listdir(const char* path, struct cfm_listelem** list, size_t* listsize,
         size_t* rcount, bool hidden) {
+    DIR* d;
+    struct dirent* dir;
+    d = opendir(path);
+    size_t count = 0;
+    struct stat st;
+    if (d) {
+        int dfd = dirfd(d);
+        while ((dir = readdir(d)) != NULL) {
+            if (dir->d_name[0] == '.' && (dir->d_name[1] == '\0' || (dir->d_name[1] == '.' && dir->d_name[2] == '\0'))) {
+                continue;
+            }
+
+            if (!hidden && dir->d_name[0] == '.') {
+                continue;
+            }
+
+            if (count == *listsize) {
+                *listsize += LIST_ALLOC_SIZE;
+                *list = realloc(*list, *listsize * sizeof(**list));
+                if (*list == NULL) {
+                    perror("realloc");
+                    exit(EXIT_FAILURE);
+                }
+            }
+
+            strncpy((*list)[count].name, dir->d_name, NAME_MAX);
+
+            (*list)[count].marked = false;
+
+            if (0 != fstatat(dfd, dir->d_name, &st, AT_SYMLINK_NOFOLLOW)) {
+                continue;
+            }
+
+            if (S_ISDIR(st.st_mode)) {
+                (*list)[count].type = ELEM_DIR;
+            } else if (S_ISLNK(st.st_mode)) {
+                if (0 == fstatat(dfd, dir->d_name, &st, 0)) {
+                    if (S_ISDIR(st.st_mode)) {
+                        (*list)[count].type = ELEM_DIRLINK;
+                    } else {
+                        (*list)[count].type = ELEM_LINK;
+                    }
+                } else {
+                    (*list)[count].type = ELEM_LINK;
+                }
+            } else {
+                if (st.st_mode & S_IXUSR) {
+                    (*list)[count].type = ELEM_EXEC;
+                } else {
+                    (*list)[count].type = ELEM_FILE;
+                }
+            }
+
+            count++;
+        }
+
+        closedir(d);
+        qsort(*list, count, sizeof(**list), cfm_elemcmp);
+    } else {
+        return -1;
+    }
+
+    *rcount = count;
+    return 0;
 }
 
 static int deldir(const char* dir) {

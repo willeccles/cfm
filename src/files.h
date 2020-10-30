@@ -48,7 +48,7 @@ extern int cfm_cp(const char* src, const char* dst);
  * Returns 0 on success, else returns. See opendir(3) for errno values set by
  * this function.
  */
-extern int listdir(const char* path, struct cfm_listelem** list, size_t* listsize,
+extern int cfm_listdir(const char* path, struct cfm_listelem** list, size_t* listsize,
         size_t* rcount, bool hidden);
 
 #endif /* CFM_FILES_H_ */
