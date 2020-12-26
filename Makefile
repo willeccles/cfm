@@ -1,22 +1,36 @@
+SRCDIR = src
+OBJDIR = obj
+
+SRC = $(wildcard $(SRCDIR)/*.c)
+OBJ = $(patsubst $(SRCDIR)/%,$(OBJDIR)/%.o,$(SRC))
+DEP = $(addsuffix .d,$(OBJ))
+
 TARGET = cfm
-SRC = cfm.c
+
 CONF = config.h
 DEFCONF = config.def.h
 MANPAGE = cfm.1
 PREFIX ?= /usr/local
 
-CFLAGS += -O3 -s -std=c11 -Wall -W -pedantic
+CFLAGS += -O3 -std=c11 -Wall -W -pedantic
 CPPFLAGS += -D_XOPEN_SOURCE=700
+LDFLAGS = -s -fwhole-program
 
 .PHONY: all install uninstall clean
 
 all: $(TARGET)
 
-$(TARGET): $(CONF) $(SRC)
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(SRC) -o $@
+$(TARGET): $(OBJ)
+	$(LD) $(LDFLAGS) -o $@ $^
+
+$(OBJDIR)/%.c.o: $(SRCDIR)/%.c | $(OBJDIR) $(CONF)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ -c $?
 
 $(CONF):
 	@cp -v $(DEFCONF) $(CONF)
+
+$(OBJDIR):
+	@mkdir -p $(OBJDIR)
 
 install: $(TARGET)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
@@ -30,3 +44,4 @@ uninstall:
 
 clean:
 	$(RM) $(TARGET)
+	$(RM) -r $(OBJDIR)
