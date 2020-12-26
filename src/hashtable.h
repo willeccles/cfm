@@ -16,10 +16,10 @@
  * Use cfm_hashtable to defined a hash table rather than using this directly.
  */
 struct cfm_hashed_file {
-    ino_t ino;                      // inode
-    dev_t dev;                      // device
-    struct cfm_hashed_file* next;   // next item
-    bool isdir;                     // is this a directory?
+  ino_t ino;                      // inode
+  dev_t dev;                      // device
+  struct cfm_hashed_file* next;   // next item
+  bool isdir;                     // is this a directory?
 };
 
 // Type representing a file hash table.

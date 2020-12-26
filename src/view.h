@@ -12,17 +12,17 @@
  * should be made part of the GUI functionality
  */
 struct cfm_view {
-    char wd[PATH_MAX + 1];
+  char wd[PATH_MAX + 1];
 
-    // TODO: remove these
-    const char* eprefix;
-    const char* emsg;
-    bool errorshown;
+  // TODO: remove these
+  const char* eprefix;
+  const char* emsg;
+  bool errorshown;
 
-    size_t selection;
-    size_t pos;
-    size_t marks;
-    struct savedpos* backstack;
+  size_t selection;
+  size_t pos;
+  size_t marks;
+  struct savedpos* backstack;
 };
 
 /* TODO: view functions */

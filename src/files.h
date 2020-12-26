@@ -56,6 +56,6 @@ extern int cfm_cp(const char* src, const char* dst);
  * this function.
  */
 extern int cfm_listdir(const char* path, struct cfm_listelem** list, size_t* listsize,
-        size_t* rcount, bool hidden);
+                       size_t* rcount, bool hidden);
 
 #endif /* CFM_FILES_H_ */

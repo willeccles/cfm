@@ -1,4 +1,6 @@
-/* vim: set ai ts=4 et sw=4 tw=80 cino=ws,l1: */
+/* vim: set ts=2 et sw=2 tw=80 fo=tjcroqln1 : */
+/* vim: set cino=h1,l1,g1,t0,i4,+4,(0,w1,W4,E-s : */
+
 /* Copyright (c) Will Eccles <will@eccles.dev>
  *
  * This Source Code Form is subject to the terms of the Mozilla Public

@@ -10,32 +10,32 @@
  * Types of files.
  */
 enum cfm_elemtype {
-    ELEM_DIR,
-    ELEM_LINK,
-    ELEM_DIRLINK,
-    ELEM_EXEC,
-    ELEM_FILE,
+  ELEM_DIR,
+  ELEM_LINK,
+  ELEM_DIRLINK,
+  ELEM_EXEC,
+  ELEM_FILE,
 };
 
 /*
  * Strings representing the types of files.
  */
 static const char* elemtypestrings[] = {
-    [ELEM_DIR]     = "dir",
-    [ELEM_LINK]    = "@file",
-    [ELEM_DIRLINK] = "@dir",
-    [ELEM_EXEC]    = "exec",
-    [ELEM_FILE]    = "file",
+  [ELEM_DIR]     = "dir",
+  [ELEM_LINK]    = "@file",
+  [ELEM_DIRLINK] = "@dir",
+  [ELEM_EXEC]    = "exec",
+  [ELEM_FILE]    = "file",
 };
 
 /*
  * Element in a file listing./
  */
 struct cfm_listelem {
-    enum cfm_elemtype type;
-    // TODO should probably replace NAME_MAX with something more reliable
-    char name[NAME_MAX + 1];
-    bool marked;
+  enum cfm_elemtype type;
+  // TODO should probably replace NAME_MAX with something more reliable
+  char name[NAME_MAX + 1];
+  bool marked;
 };
 
 /*
@@ -52,11 +52,11 @@ struct cfm_listelem {
  * TODO: move to another file
  */
 struct cfm_deletedfile {
-    char* original;
-    int id;
-    bool mass;
-    int massid;
-    struct cfm_deletedfile* prev;
+  char* original;
+  int id;
+  bool mass;
+  int massid;
+  struct cfm_deletedfile* prev;
 };
 
 /*
@@ -66,8 +66,8 @@ struct cfm_deletedfile {
  * TODO: move to another file
  */
 struct cfm_savedpos {
-    size_t pos, sel; // position and selection
-    struct cfm_savedpos* prev;
+  size_t pos, sel; // position and selection
+  struct cfm_savedpos* prev;
 };
 
 #endif /* CFM_TYPES_H_ */
