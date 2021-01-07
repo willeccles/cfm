@@ -19,6 +19,7 @@ int backupterm(void) {
   return 0;
 }
 
+// TODO run on SIGWINCH
 int termsize(int* rows, int* cols) {
   if (!interactive) return 0;
   struct winsize ws;
@@ -44,10 +45,14 @@ int setupterm(void) {
   setvbuf(stdout, NULL, _IOFBF, 0);
 
   struct termios new_term = old_term;
+  new_term.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
   new_term.c_oflag &= ~OPOST;
-  new_term.c_lflag &= ~(ECHO | ICANON);
+  new_term.c_cflag |= CS8;
+  new_term.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+  new_term.c_cc[VMIN] = 0;
+  new_term.c_cc[VTIME] = 1;
 
-  if (tcsetattr(STDIN_FILENO, TCSANOW, &new_term) < 0) {
+  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &new_term) < 0) {
     perror("tcsetattr");
     return 1;
   }

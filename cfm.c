@@ -1612,6 +1612,7 @@ int main(int argc, char** argv) {
         k = getkey();
         switch(k) {
             case 'h':
+#if 0
                 {
                     char* bn = basename(view->wd);
                     strncpy(lastname, bn, NAME_MAX);
@@ -1630,6 +1631,7 @@ int main(int argc, char** argv) {
                         update = true;
                     }
                 }
+#endif
                 break;
             case '\033':
                 if (view->marks > 0) {
@@ -1879,6 +1881,7 @@ outofloop:
 
         switch (k) {
             case 'j':
+#if 0
                 if (view->selection < dcount - 1) {
                     view->errorshown = false;
                     drawentry(&(list[view->selection]), false);
@@ -1890,8 +1893,10 @@ outofloop:
                     }
                     drawstatusline(&(list[view->selection]), dcount, view->selection, view->marks, view->pos);
                 }
+#endif
                 break;
             case 'k':
+#if 0
                 if (view->selection > 0) {
                     view->errorshown = false;
                     drawentry(&(list[view->selection]), false);
@@ -1905,8 +1910,10 @@ outofloop:
                     drawentry(&(list[view->selection]), true);
                     drawstatusline(&(list[view->selection]), dcount, view->selection, view->marks, view->pos);
                 }
+#endif
                 break;
             case KEY_PGDN:
+#if 0
                 // don't do anything if we are too low to page down
                 if ((size_t)rows - 2 + view->selection - view->pos < dcount) {
                     // 1. move the view down so the last item is now the top item
@@ -1917,8 +1924,10 @@ outofloop:
                     view->errorshown = false;
                     redraw = true;
                 }
+#endif
                 break;
             case KEY_PGUP:
+#if 0
                 // do nothing if we are in the top "page"
                 if (view->pos != view->selection) {
                     // 1. move view up so that the top item is now the last item
@@ -1933,11 +1942,13 @@ outofloop:
                     view->errorshown = false;
                     redraw = true;
                 }
+#endif
                 break;
             case 'g':
                 if (pk != 'g') {
                     break;
                 }
+#if 0
                 view->errorshown = false;
                 if (view->pos != view->selection) {
                     view->pos = 0;
@@ -1951,8 +1962,10 @@ outofloop:
                     drawentry(&(list[view->selection]), true);
                     drawstatusline(&(list[view->selection]), dcount, view->selection, view->marks, view->pos);
                 }
+#endif
                 break;
             case 'G':
+#if 0
                 view->selection = dcount - 1;
                 if (dcount > (size_t)rows - 2) {
                     view->pos = rows - 3;
@@ -1961,11 +1974,13 @@ outofloop:
                 }
                 view->errorshown = false;
                 redraw = true;
+#endif
                 break;
 #ifndef ENTER_OPEN
             case '\n':
 #endif
             case 'l':
+#if 0
                 if (E_DIR(list[view->selection].type)) {
                     struct savedpos* sp = malloc(sizeof(struct savedpos));
                     sp->pos = view->pos;
@@ -1986,6 +2001,7 @@ outofloop:
                     }
                 }
                 view->errorshown = false;
+#endif
                 break;
 #ifdef ENTER_OPEN
             case '\n':
@@ -2119,6 +2135,7 @@ outofloop:
                 break;
             case ' ':
             case 'm':
+#if 0
                 list[view->selection].marked = !(list[view->selection].marked);
                 if (list[view->selection].marked) {
                     view->marks++;
@@ -2127,6 +2144,7 @@ outofloop:
                 }
                 drawstatusline(&(list[view->selection]), dcount, view->selection, view->marks, view->pos);
                 drawentry(&(list[view->selection]), true);
+#endif
                 break;
             case 'R':
                 status = readfname(tmpnam, list[view->selection].name);

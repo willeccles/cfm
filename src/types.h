@@ -59,15 +59,4 @@ struct cfm_deletedfile {
   struct cfm_deletedfile* prev;
 };
 
-/*
- * Represents a saved position for a view (i.e. when coming out of a
- * directory). Can be chained.
- *
- * TODO: move to another file
- */
-struct cfm_savedpos {
-  size_t pos, sel; // position and selection
-  struct cfm_savedpos* prev;
-};
-
 #endif /* CFM_TYPES_H_ */
