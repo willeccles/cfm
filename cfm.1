@@ -1,204 +1,257 @@
-.TH CFM 1 "2020 January 29" "" ""
-
+.TH CFM 1 "2022 April 28"
+.
 .SH NAME
 cfm \- cactus file manager
-
+.
 .SH SYNOPSIS
 .B cfm
 .RI [ DIR ]
-
+.
 .SH DESCRIPTION
 .B cfm
 is a simple, clean, fast TUI file manager.
-
+.
 .SH OPTIONS
 .TP
-.BR DIR
+.I DIR
 Directory to open
 .B cfm
 in, or the working directory if not specified.
-
+.
 .SH CONFIGURATION
-Copy \fIconfig.def.h\fR to \fIconfig.h\fR and modify as needed to configure at
-build-time. By default,
+Copy
+.I config.def.h
+to
+.I config.h
+and modify as needed to configure at build-time.
+By default,
 .B cfm
-will attempt to read the \fIEDITOR\fR, \fISHELL\fR, and \fIOPENER\fR environment
-variables. If it is preferable for
+will attempt to read the
+.BR EDITOR , SHELL ", and " OPENER
+environment variables.
+If it is preferable for
 .B cfm
 to use a different value for any of these, it can be specified by prepending
-\fICFM_\fR to any of the variables.
+.B CFM_
+to any of the variables.
 .B cfm
-will also check for the \fICFM_TMP\fR environment variable for a location for its
-temp directory. If the variable is not set and \fICFM_TMP\fR was not set in
-\fIconfig.h\fR, it will attempt to use \fI/tmp/cfmtmp\fR. If the temporary
-directory cannot be created, then
+will also check for the
+.B CFM_TMP
+environment variable for a location for its temp directory.
+If the variable is not set and
+.B CFM_TMP
+was not set in
+.IR config.h ,
+it will attempt to use
+.IR /tmp/cfmtmp .
+If the temporary directory cannot be created, then
 .B cfm
 will disable cut/paste and deletions will be permanent (no undo).
-If the \fICD_ON_CLOSE\fR option is not enabled at compile-time (default off),
+If the
+.B CD_ON_CLOSE
+option is not enabled at compile-time (default off),
 .B cfm
-will also check for the presence of the \fICFM_CD_ON_CLOSE\fR environment
-variable, which should contain the path to a file into which it can save its
-current working directory when quit with
+will also check for the presence of the
+.B CFM_CD_ON_CLOSE
+environment variable, which should contain the path to a file into which it can
+save its current working directory when quit with
 .BR Q .
-
+.
 .SH USAGE
-Note: arrow keys work the same as hjkl.
+Note: Arrow keys work the same as hjkl.
 .TP
-.B "j k"
-Move up/down
-
+.B j k
+Move up/down.
+.
 .TP
-.B "PgUp PgDn"
-Move up/down by one full screen
-
+.B PgUp PgDn
+Move up/down by one full screen.
+.
 .TP
-.B "h l"
-Move left/right
-
+.B h l
+Move left/right.
+.
 .TP
 .B gg
-Move to top
-
+Move to top.
+.
 .TP
 .B G
-Move to bottom
-
+Move to bottom.
+.
 .TP
 .B ~
-Move to user home directory
-
+Move to user home directory.
+.
 .TP
 .B /
-Move to system root directory
-
+Move to system root directory.
+.
 .TP
 .B l
-Open file using \fIEDITOR\fR, or change into directory
-
+Open file using
+.BR EDITOR ,
+or change into directory.
+.
 .TP
 .B o
-Open file or directory with \fIOPENER\fR
-
+Open file or directory with
+.BR OPENER .
+.
 .TP
 .B RET
 Works like
 .B o
-if \fIENTER_OPENS\fR is enabled, else works like
-.B l
-
+if
+.I ENTER_OPENS
+is enabled, else works like
+.BR l .
+.
 .TP
 .B .
-Toggles visibility of dotfiles
-
+Toggles visibility of dotfiles.
+.
 .TP
 .B e
-Open file or directory in \fIEDITOR\fR
-
+Open file or directory in
+.IR EDITOR .
+.
 .TP
 .B r
-Reload directory
-
+Reload directory.
+.
 .TP
 .B S
-Spawn a shell (defined by \fISHELL\fR) in a directory
-
+Spawn a shell (defined by
+.BR SHELL
+in a directory.
+.
 .TP
 .B T
-Create a new file, opening \fIEDITOR\fR to enter a filename
-
+Create a new file, opening
+.B EDITOR
+to enter a filename.
+.
 .TP
 .B M
-Create a new directory, opening \fIEDITOR\fR to enter a directory name
-
+Create a new directory, opening
+.B EDITOR
+to enter a directory name.
+.
 .TP
 .B R
-Rename a file by opening \fIEDITOR\fR to edit the filename
-
-Note: for
+Rename a file by opening
+.B EDITOR
+to edit the filename.
+.
+.IP
+Note: For
 .BR T ,
 .BR M ,
 and
 .BR R ,
 the allowed characters default to POSIX "fully portable filename" standards
-with the addition of spaces: \fI[A-Za-z0-9 ._-]\fR. Spaces can be disabled by
-setting \fIALLOW_SPACES\fR to 0 in \fIconfig.h\fR.
-
+with the addition of spaces:
+.IR "[A-Za-z0-9 ._-]" .
+Spaces can be disabled by setting
+.B ALLOW_SPACES
+to 0 in
+.IR config.h .
+.
 .TP
 .B dd
-Delete current selection (does not touch marked files). This will copy the
-file/directory into the \fICFM_TMP\fR directory and can be undone with
+Delete current selection (does not touch marked files).
+This will copy the file/directory into the
+.B CFM_TMP
+directory and can be undone with
 .BR u .
-If the \fICFM_TMP\fR directory does not exist, deletions will be permanent.
-
+If the
+.B CFM_TMP
+directory does not exist, deletions will be permanent.
+.
 .TP
-.B "alt+dd"
+.B alt+dd
 Permanently delete current selection (does not touch marked files) without
 backing up for undo like
 .B dd
-does. This is useful for large directories where a copy will take a long time.
-
+does.
+This is useful for large directories where a copy will take a long time.
+.
 .TP
-.B "m Space"
-Toggle mark for deletion
-
+.B m Space
+Toggle mark for deletion.
+.
 .TP
 .B D
-Delete all marked files (does not touch unmarked files)
-
+Delete all marked files (does not touch unmarked files).
+.
 .TP
 .B u
 Undo the last deletion operation (does not work if
 .B cfm
-was unable to create or access its trash directory, in which case deletion is permanent)
-
+was unable to create or access its trash directory, in which case deletion is permanent).
+.
 .TP
 .B X
 Cut the selected file or directory (can be pasted again with
 .BR p ).
 Not available if the tmp directory is not available.
-
+.
 .TP
 .B yy
 Copy the selected file or directory (can be pasted again with
-.BR p )
-
+.BR p ).
+.
 .TP
 .B p
-Paste the previously cut or copied file or directory; shared between all views
-
+Paste the previously cut or copied file or directory; shared between all views.
+.
 .TP
 .B TAB
-Switches to the next view
-
+Switches to the next view.
+.
 .TP
-.B `
-Switches to the previous view
-
+.B \`
+Switches to the previous view.
+.
 .TP
-.B "1\-0"
-Switches to view N, up to the number specified by \fIVIEW_COUNT\fR (2 by default)
-
+.B 1\(en0
+Switches to view
+.IR N ,
+up to the number specified by
+.B VIEW_COUNT
+(2 by default).
+.
 .TP
-.B "q ESC"
+.B q ESC
 Quit
-.BR cfm
-
+.BR cfm .
+.
 .TP
 .B Q
 Quit
 .BR cfm ,
-saving its working directory to the file specified in \fICD_ON_CLOSE\fR, if
-enabled, or the \fICFM_CD_ON_CLOSE\fR environment variable if not.
-
+saving its working directory to the file specified in
+.BR CD_ON_CLOSE ,
+if enabled, or the
+.B CFM_CD_ON_CLOSE
+environment variable if not.
+.
 .SH SCRIPTING
 If stdin or stdout are not attached to a TTY,
 .B cfm
 will read commands from stdin and quit at EOF, skipping all drawing.
-Any errors are fatal and will be printed to stderr. Note that in
-non-interactive mode,
+Any errors are fatal and will be printed to stderr.
+Note that in non-interactive mode,
 .B cfm
-will NOT backup files when deleting. All deletions will be permanent.
-
+will
+.B NOT
+backup files when deleting.
+All deletions will be permanent.
+.
 .SH AUTHOR
-Will Eccles <will@eccles.dev>.
-For more information, see https://github.com/willeccles/cfm.
+Will Eccles \(lawill@eccles.dev\(ra.
+For more information, see the
+.UR https://github.com/willeccles/cfm
+GitHub repo
+.UE .
